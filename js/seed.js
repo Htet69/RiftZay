@@ -1,4 +1,4 @@
-/* RiftZay - Seed data (Riftbound reference cards & demo listings) */
+/* RiftZay - Seed data (Riftbound reference cards) */
 
 const RIFTZAY_MARKETS = [
     { key: "tcgplayer", name: "TCGplayer", logo: "🛒", region: "North America" },
@@ -114,66 +114,6 @@ const RIFTZAY_CARDS = [
         set: "Riftbound: Duskveil",
         rarity: "epic",
         prices: { tcgplayer: 9.8, cardmarket: 9.0, ebay: 11.5, cardtrader: 8.6, amazon: 13.0, trollandtoad: 10.2 },
-    },
-];
-
-/* Demo community listings shown in Local mode so the market
- * is alive immediately. In Cloud mode only real user listings
- * from Supabase appear. */
-const RIFTZAY_DEMO_LISTINGS = [
-    {
-        id: "demo-1",
-        card_slug: "eclipse-dragon",
-        seller_name: "RiftCollector",
-        price: 23.0,
-        condition: "near-mint",
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-        demo: true,
-    },
-    {
-        id: "demo-2",
-        card_slug: "starforged-arcanist",
-        seller_name: "ArcaneMarket",
-        price: 44.5,
-        condition: "mint",
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
-        demo: true,
-    },
-    {
-        id: "demo-3",
-        card_slug: "dimensional-riftcaller",
-        seller_name: "DuskveilDuke",
-        price: 66.0,
-        condition: "lightly-played",
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
-        demo: true,
-    },
-    {
-        id: "demo-4",
-        card_slug: "chrono-weave-adept",
-        seller_name: "TimelineTrader",
-        price: 3.25,
-        condition: "near-mint",
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
-        demo: true,
-    },
-    {
-        id: "demo-5",
-        card_slug: "twilight-herald",
-        seller_name: "RiftCollector",
-        price: 12.9,
-        condition: "mint",
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(),
-        demo: true,
-    },
-    {
-        id: "demo-6",
-        card_slug: "oblivions-edge",
-        seller_name: "NullFieldX",
-        price: 10.0,
-        condition: "moderately-played",
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 70).toISOString(),
-        demo: true,
     },
 ];
 

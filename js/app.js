@@ -1,4 +1,4 @@
-/* RiftZay - main application logic */
+/* RiftZay - main application logic (price tracker) */
 
 (function () {
     "use strict";
@@ -31,18 +31,6 @@
         return m ? m.logo : "🏪";
     };
 
-    const timeAgo = function (iso) {
-        if (!iso) return "";
-        const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-        if (s < 60) return "just now";
-        const m = Math.floor(s / 60);
-        if (m < 60) return m + "m ago";
-        const h = Math.floor(m / 60);
-        if (h < 24) return h + "h ago";
-        const d = Math.floor(h / 24);
-        return d + "d ago";
-    };
-
     function showToast(message, type) {
         const toast = $("#toast");
         toast.textContent = message;
@@ -57,15 +45,13 @@
     /* ---------- Views / navigation ---------- */
 
     function showView(name) {
-        ["browse", "market", "mylistings", "watchlist"].forEach(function (v) {
+        ["browse", "watchlist"].forEach(function (v) {
             $("#view-" + v).hidden = v !== name;
         });
         document.querySelectorAll(".main-nav a").forEach(function (a) {
             a.classList.toggle("active", a.getAttribute("data-nav") === name);
         });
 
-        if (name === "market") renderMarket();
-        if (name === "mylistings") renderMyListings();
         if (name === "watchlist") renderWatchlist();
     }
 
@@ -99,8 +85,8 @@
         const isRegister = authMode === "register";
         $("#auth-title").textContent = isRegister ? "Welcome to RiftZay" : "Welcome back";
         $("#auth-sub").textContent = isRegister
-            ? "Create an account to list and trade Riftbound cards."
-            : "Sign in to manage your listings and watchlist.";
+            ? "Create an account to track Riftbound card prices."
+            : "Sign in to manage your watchlist.";
         $("#auth-switch-label").textContent = isRegister
             ? "Already have an account?"
             : "New to RiftZay?";
@@ -139,6 +125,7 @@
             updateAuthUI();
             renderCards($("#search-input").value, $("#sort-select").value);
             renderWatchlist();
+            updateStats();
         } catch (err) {
             errEl.textContent = err.message;
             errEl.hidden = false;
@@ -153,6 +140,7 @@
         showToast("Signed out.", "");
         renderCards($("#search-input").value, $("#sort-select").value);
         renderWatchlist();
+        updateStats();
     }
 
     /* ---------- Card grid (browse) ---------- */
@@ -229,99 +217,7 @@
         empty.hidden = filtered.length !== 0;
     }
 
-    /* ---------- Listings ---------- */
-
-    function listingHTML(listing) {
-        const card = CARD_BY_SLUG[listing.card_slug];
-        if (!card) return "";
-        const isMine = currentUser && listing.seller_id === currentUser.id;
-        const isDemo = listing.demo;
-
-        let actions = "";
-        if (isMine) {
-            actions = '<button class="btn btn-danger btn-sm" data-delete-listing="' + listing.id + '">Remove</button>';
-        } else if (currentUser && !isDemo) {
-            actions = '<button class="btn btn-primary btn-sm" data-buy-listing="' + listing.id + '">Buy Now</button>';
-        } else if (!currentUser) {
-            actions = '<button class="btn btn-primary btn-sm" data-buy-listing="' + listing.id + '">Buy Now</button>';
-        }
-
-        return (
-            '<div class="listing-card">' +
-            "<h4>" + card.name + (isMine ? ' <span class="mine-badge">Yours</span>' : "") + "</h4>" +
-            '<div class="listing-set">' + card.set + "</div>" +
-            '<div class="listing-price">' + fmt(listing.price) + "</div>" +
-            '<div class="listing-meta">' +
-            '<span class="condition-badge">' + (listing.condition || "unknown") + "</span>" +
-            "<span>by <span class='listing-seller'>" + (listing.seller_name || "Anonymous") + "</span></span>" +
-            "<span>" + timeAgo(listing.created_at) + "</span>" +
-            "</div>" +
-            '<div class="listing-actions">' + actions + "</div>" +
-            "</div>"
-        );
-    }
-
-    async function renderMarket(filterText) {
-        const grid = $("#listings-grid");
-        const empty = $("#listings-empty");
-        const select = $("#listing-card");
-
-        if (select.options.length === 0) {
-            CARDS.forEach(function (c) {
-                const opt = document.createElement("option");
-                opt.value = c.slug;
-                opt.textContent = c.name + " — " + c.set;
-                select.appendChild(opt);
-            });
-        }
-
-        let listings;
-        try {
-            listings = await API.getListings();
-        } catch (e) {
-            showToast("Failed to load listings: " + e.message, "error");
-            listings = [];
-        }
-
-        $("#stat-listings").textContent = listings.length;
-
-        const q = (filterText || "").trim().toLowerCase();
-        const filtered = listings.filter(function (l) {
-            const card = CARD_BY_SLUG[l.card_slug];
-            if (!card) return false;
-            if (!q) return true;
-            return (
-                card.name.toLowerCase().indexOf(q) !== -1 ||
-                card.set.toLowerCase().indexOf(q) !== -1 ||
-                (l.condition || "").toLowerCase().indexOf(q) !== -1 ||
-                (l.seller_name || "").toLowerCase().indexOf(q) !== -1
-            );
-        });
-
-        grid.innerHTML = filtered.map(listingHTML).join("");
-        empty.hidden = filtered.length !== 0;
-    }
-
-    async function renderMyListings() {
-        const grid = $("#my-listings-grid");
-        const empty = $("#my-listings-empty");
-
-        if (!currentUser) {
-            grid.innerHTML = "";
-            empty.hidden = false;
-            empty.textContent = "Sign in to see your listings.";
-            return;
-        }
-
-        try {
-            const mine = await API.getMyListings(currentUser.id);
-            grid.innerHTML = mine.map(listingHTML).join("");
-            empty.hidden = mine.length !== 0;
-            empty.textContent = "You haven't listed any cards yet. Head to the Market to post your first listing.";
-        } catch (e) {
-            showToast("Failed to load your listings: " + e.message, "error");
-        }
-    }
+    /* ---------- Watchlist ---------- */
 
     async function renderWatchlist() {
         const grid = $("#watchlist-grid");
@@ -381,7 +277,6 @@
             '<button class="btn btn-ghost" data-watch="' + card.slug + '">' +
             (watched ? "★ Remove from Watchlist" : "☆ Add to Watchlist") +
             "</button>" +
-            '<a class="btn btn-primary" href="#" data-nav="market">View Marketplace</a>' +
             "</div>";
 
         $("#card-modal").hidden = false;
@@ -410,70 +305,11 @@
             }
             renderCards($("#search-input").value, $("#sort-select").value);
             renderWatchlist();
+            updateStats();
             const detailOpen = !$("#card-modal").hidden;
             if (detailOpen) openCardDetail(slug);
         } catch (e) {
             showToast(e.message, "error");
-        }
-    }
-
-    async function handleBuy(listingId) {
-        if (!currentUser) {
-            openAuth("register");
-            showToast("Sign in to buy cards.", "");
-            return;
-        }
-        try {
-            await API.buyListing(listingId, currentUser);
-            showToast("Purchase complete! The card is yours.", "success");
-            renderMarket($("#listing-search").value);
-            const detailOpen = !$("#card-modal").hidden;
-            if (detailOpen) closeCardDetail();
-        } catch (e) {
-            showToast(e.message || "Could not complete purchase.", "error");
-        }
-    }
-
-    async function handleDeleteListing(listingId) {
-        if (!currentUser) return;
-        try {
-            await API.deleteListing(listingId, currentUser.id);
-            showToast("Listing removed.", "");
-            renderMarket($("#listing-search").value);
-            renderMyListings();
-        } catch (e) {
-            showToast(e.message, "error");
-        }
-    }
-
-    async function handleListingSubmit(e) {
-        e.preventDefault();
-        if (!currentUser) {
-            openAuth("register");
-            showToast("Sign in to list cards.", "");
-            return;
-        }
-        const cardSlug = $("#listing-card").value;
-        const price = parseFloat($("#listing-price").value);
-        const condition = $("#listing-condition").value;
-        const errEl = $("#listing-error");
-
-        if (!cardSlug || isNaN(price) || price <= 0) {
-            errEl.textContent = "Please choose a card and enter a valid price.";
-            errEl.hidden = false;
-            return;
-        }
-
-        try {
-            await API.createListing(cardSlug, price, condition, currentUser);
-            errEl.hidden = true;
-            $("#listing-price").value = "";
-            showToast("Listing posted to the market!", "success");
-            renderMarket($("#listing-search").value);
-            renderMyListings();
-        } catch (e) {
-            errEl.textContent = e.message;
-            errEl.hidden = false;
         }
     }
 
@@ -507,21 +343,21 @@
         showToast("Prices refreshed with the latest market ticks.", "");
     }
 
+    /* ---------- Stats ---------- */
+
+    function updateStats() {
+        $("#stat-cards").textContent = CARDS.length;
+        $("#stat-markets").textContent = MARKETS.length;
+        $("#stat-watchlist").textContent = currentUser ? myWatchlist.length : 0;
+    }
+
     /* ---------- Init ---------- */
 
     async function init() {
         updateModeBanner();
 
         // Hero stats
-        $("#stat-cards").textContent = CARDS.length;
-        $("#stat-markets").textContent = MARKETS.length;
-        let listings;
-        try {
-            listings = await API.getListings();
-        } catch (e) {
-            listings = [];
-        }
-        $("#stat-listings").textContent = listings.length;
+        updateStats();
 
         // Restore session
         try {
@@ -537,6 +373,7 @@
             }
         }
         updateAuthUI();
+        updateStats();
 
         // Initial renders
         renderCards("", "name");
@@ -546,12 +383,6 @@
             el.addEventListener("click", function (e) {
                 e.preventDefault();
                 const nav = this.getAttribute("data-nav");
-                if (nav === "mylistings" || nav === "watchlist") {
-                    if (!currentUser && nav === "mylistings") {
-                        openAuth("register");
-                        return;
-                    }
-                }
                 showView(nav);
             });
         });
@@ -562,9 +393,6 @@
         });
         $("#sort-select").addEventListener("change", function () {
             renderCards($("#search-input").value, this.value);
-        });
-        $("#listing-search").addEventListener("input", function () {
-            renderMarket(this.value);
         });
 
         // Auth
@@ -584,16 +412,13 @@
         });
         $("#auth-form").addEventListener("submit", handleAuthSubmit);
 
-        // Listings
-        $("#listing-form").addEventListener("submit", handleListingSubmit);
-
         // Card modal
         $("#card-modal-close").addEventListener("click", closeCardDetail);
         $("#card-modal").addEventListener("click", function (e) {
             if (e.target === this) closeCardDetail();
         });
 
-        // Delegated: card detail, watch, buy, delete
+        // Delegated: card detail, watch
         document.addEventListener("click", async function (e) {
             const detailEl = e.target.closest("[data-detail]");
             if (detailEl) {
@@ -604,18 +429,6 @@
             const watchEl = e.target.closest("[data-watch]");
             if (watchEl) {
                 await handleWatchClick(watchEl.getAttribute("data-watch"));
-                return;
-            }
-
-            const buyEl = e.target.closest("[data-buy-listing]");
-            if (buyEl) {
-                await handleBuy(buyEl.getAttribute("data-buy-listing"));
-                return;
-            }
-
-            const delEl = e.target.closest("[data-delete-listing]");
-            if (delEl) {
-                await handleDeleteListing(delEl.getAttribute("data-delete-listing"));
                 return;
             }
         });

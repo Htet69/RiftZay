@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RiftZay — Riftbound Marketplace</title>
+    <title>RiftZay — Riftbound Price Tracker</title>
     <meta name="description"
-        content="RiftZay — the Riftbound TCG marketplace. Browse cards, compare market prices, list your cards, and trade." />
+        content="RiftZay — the Riftbound TCG price tracker. Compare card prices across 6 online marketplaces, track your watchlist, and find the best deals." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap"
@@ -24,8 +24,6 @@
             </a>
             <nav class="main-nav">
                 <a href="#" data-nav="browse" class="active">Browse</a>
-                <a href="#" data-nav="market">Market</a>
-                <a href="#" data-nav="mylistings">My Listings</a>
                 <a href="#" data-nav="watchlist">Watchlist</a>
             </nav>
             <div class="auth-area">
@@ -40,7 +38,7 @@
         <div class="modal">
             <button class="modal-close" id="auth-close" aria-label="Close">✕</button>
             <h2 id="auth-title">Welcome to RiftZay</h2>
-            <p class="modal-sub" id="auth-sub">Create an account to list and trade Riftbound cards.</p>
+            <p class="modal-sub" id="auth-sub">Create an account to track Riftbound card prices.</p>
 
             <div class="data-mode-banner">
                 <span id="mode-dot" class="dot"></span>
@@ -54,7 +52,7 @@
                 </label>
                 <label class="field" id="username-field">
                     <span>Username</span>
-                    <input type="text" id="auth-username" placeholder="RiftTrader99" />
+                    <input type="text" id="auth-username" placeholder="RiftTracker99" />
                 </label>
                 <label class="field">
                     <span>Password</span>
@@ -78,20 +76,20 @@
     <section class="view" id="view-browse">
         <div class="hero">
             <div class="container hero-inner">
-                <div class="hero-badge">Riftbound Market Hub</div>
-                <h1>Track every Riftbound card across every market.</h1>
+                <div class="hero-badge">Riftbound Price Hub</div>
+                <h1>Compare every Riftbound card price across every market.</h1>
                 <p>
-                    Compare live prices from TCGplayer, Cardmarket, eBay, and more.
-                    Watch cards, list your collection, and trade on the RiftZay marketplace.
+                    Track live prices from TCGplayer, Cardmarket, eBay, and more.
+                    Find the best deals, watch cards, and never overpay again.
                 </p>
                 <div class="hero-actions">
-                    <a class="btn btn-primary" href="#" data-nav="market">Browse the Market</a>
+                    <a class="btn btn-primary" href="#" data-nav="browse">Browse Cards</a>
                     <button class="btn btn-ghost" id="refresh-prices-btn">Refresh Prices</button>
                 </div>
                 <div class="hero-stats">
                     <div class="stat"><strong id="stat-cards">0</strong><span>Cards Tracked</span></div>
                     <div class="stat"><strong id="stat-markets">6</strong><span>Markets Compared</span></div>
-                    <div class="stat"><strong id="stat-listings">0</strong><span>Live Listings</span></div>
+                    <div class="stat"><strong id="stat-watchlist">0</strong><span>Cards on Watchlist</span></div>
                 </div>
             </div>
         </div>
@@ -109,64 +107,6 @@
 
             <div class="card-grid" id="card-grid"></div>
             <p class="empty-state" id="empty-state" hidden>No cards match your search.</p>
-        </div>
-    </section>
-
-    <!-- ============ MARKET VIEW ============ -->
-    <section class="view" id="view-market" hidden>
-        <div class="container">
-            <h2 class="section-title">Riftbound Marketplace</h2>
-            <p class="section-sub">Buy and sell Riftbound cards with fellow collectors.</p>
-
-            <div class="market-layout">
-                <div class="listings-panel">
-                    <h3 class="panel-title">Live Listings</h3>
-                    <div class="listing-filters">
-                        <input id="listing-search" type="search" placeholder="Filter listings..." />
-                    </div>
-                    <div id="listings-grid" class="listings-grid"></div>
-                    <p class="empty-state" id="listings-empty" hidden>No listings yet. Be the first to list a card!</p>
-                </div>
-
-                <aside class="side-panel">
-                    <h3 class="panel-title">List a Card</h3>
-                    <p class="side-note">Sell a Riftbound card from your collection at your own price.</p>
-                    <form id="listing-form">
-                        <label class="field">
-                            <span>Card</span>
-                            <select id="listing-card" required></select>
-                        </label>
-                        <label class="field">
-                            <span>Your Price (US$)</span>
-                            <input type="number" id="listing-price" min="0.01" step="0.01" required
-                                placeholder="e.g. 12.50" />
-                        </label>
-                        <label class="field">
-                            <span>Condition</span>
-                            <select id="listing-condition" required>
-                                <option value="mint">Mint</option>
-                                <option value="near-mint">Near Mint</option>
-                                <option value="lightly-played">Lightly Played</option>
-                                <option value="moderately-played">Moderately Played</option>
-                                <option value="heavily-played">Heavily Played</option>
-                            </select>
-                        </label>
-                        <p class="form-error" id="listing-error" hidden></p>
-                        <button type="submit" class="btn btn-primary btn-block">Post Listing</button>
-                    </form>
-                </aside>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============ MY LISTINGS VIEW ============ -->
-    <section class="view" id="view-mylistings" hidden>
-        <div class="container">
-            <h2 class="section-title">My Listings</h2>
-            <p class="section-sub">Manage the cards you have for sale.</p>
-            <div id="my-listings-grid" class="listings-grid"></div>
-            <p class="empty-state" id="my-listings-empty">You haven't listed any cards yet. Head to the Market to post
-                your first listing.</p>
         </div>
     </section>
 
@@ -193,7 +133,7 @@
     <footer class="site-footer">
         <div class="container footer-inner">
             <span class="brand-name">Rift<span>Zay</span></span>
-            <p>Riftbound TCG Marketplace — trade, track, and compare.</p>
+            <p>Riftbound TCG Price Tracker — compare, track, and save.</p>
             <p class="footer-note">© 2026 RiftZay. Not affiliated with Riftbound or its publishers.</p>
         </div>
     </footer>

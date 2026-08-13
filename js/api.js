@@ -1,4 +1,4 @@
-/* RiftZay - API layer
+/* RiftZay - API layer (price tracker)
  *
  * Auto-detects mode:
  *  - Cloud mode  : Supabase configured -> shared real database, real auth
@@ -20,9 +20,7 @@
     const LS_KEYS = {
         users: "riftzay_users",
         session: "riftzay_session",
-        listings: "riftzay_listings",
         watchlist: "riftzay_watchlist",
-        seeded: "riftzay_seeded",
     };
 
     function readLS(key, fallback) {
@@ -53,15 +51,6 @@
     let supabase = null;
     if (HAS_SUPABASE) {
         supabase = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
-    }
-
-    /* Seed demo listings into local storage once so market looks alive. */
-    function ensureLocalSeed() {
-        let seeded = readLS(LS_KEYS.seeded, false);
-        if (!seeded) {
-            writeLS(LS_KEYS.listings, RIFTZAY_DEMO_LISTINGS);
-            writeLS(LS_KEYS.seeded, true);
-        }
     }
 
     const API = {
@@ -153,117 +142,6 @@
                 await supabase.auth.signOut();
             }
             localStorage.removeItem(LS_KEYS.session);
-        },
-
-        /* ---------- LISTINGS ---------- */
-
-        getListings: async function () {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .select("*")
-                    .eq("status", "active")
-                    .order("created_at", { ascending: false });
-                if (error) throw new Error(error.message);
-                return data || [];
-            }
-
-            ensureLocalSeed();
-            return (readLS(LS_KEYS.listings, []) || []).slice().sort(function (a, b) {
-                return new Date(b.created_at) - new Date(a.created_at);
-            });
-        },
-
-        getMyListings: async function (userId) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .select("*")
-                    .eq("seller_id", userId)
-                    .order("created_at", { ascending: false });
-                if (error) throw new Error(error.message);
-                return data || [];
-            }
-
-            const all = readLS(LS_KEYS.listings, []) || [];
-            return all.filter(function (l) { return l.seller_id === userId; });
-        },
-
-        createListing: async function (cardSlug, price, condition, seller) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .insert([
-                        {
-                            card_slug: cardSlug,
-                            price: parseFloat(price),
-                            condition: condition,
-                            seller_id: seller.id,
-                            seller_name: seller.username,
-                            status: "active",
-                        },
-                    ])
-                    .select()
-                    .single();
-                if (error) throw new Error(error.message);
-                return data;
-            }
-
-            const all = readLS(LS_KEYS.listings, []) || [];
-            const listing = {
-                id: uid(),
-                card_slug: cardSlug,
-                price: parseFloat(price),
-                condition: condition,
-                seller_id: seller.id,
-                seller_name: seller.username,
-                status: "active",
-                created_at: nowISO(),
-            };
-            all.unshift(listing);
-            writeLS(LS_KEYS.listings, all);
-            return listing;
-        },
-
-        deleteListing: async function (listingId, userId) {
-            if (HAS_SUPABASE) {
-                const { error } = await supabase
-                    .from("listings")
-                    .delete()
-                    .eq("id", listingId)
-                    .eq("seller_id", userId);
-                if (error) throw new Error(error.message);
-                return;
-            }
-
-            const all = readLS(LS_KEYS.listings, []) || [];
-            const next = all.filter(function (l) {
-                return !(l.id === listingId && l.seller_id === userId);
-            });
-            writeLS(LS_KEYS.listings, next);
-        },
-
-        buyListing: async function (listingId, buyer) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .update({ status: "sold", buyer_id: buyer.id, sold_at: nowISO() })
-                    .eq("id", listingId)
-                    .eq("status", "active")
-                    .select()
-                    .single();
-                if (error) throw new Error(error.message);
-                return data;
-            }
-
-            const all = readLS(LS_KEYS.listings, []) || [];
-            const idx = all.findIndex(function (l) { return l.id === listingId && l.status === "active"; });
-            if (idx === -1) throw new Error("This listing is no longer available.");
-            all[idx].status = "sold";
-            all[idx].buyer_id = buyer.id;
-            all[idx].sold_at = nowISO();
-            writeLS(LS_KEYS.listings, all);
-            return all[idx];
         },
 
         /* ---------- WATCHLIST ---------- */
