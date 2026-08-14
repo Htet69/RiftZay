@@ -167,7 +167,9 @@ function lowestListing(card) {
 
     function updateModeBanner() {
         const isCloud = API.mode() === "cloud";
-        $("#mode-dot").classList.toggle("cloud", isCloud);
+        const modeDot = $("#mode-dot");
+        if (!modeDot) return;
+        modeDot.classList.toggle("cloud", isCloud);
         $("#mode-text").textContent = isCloud
             ? "Cloud mode — shared online database"
             : "Local mode — accounts and watchlists stay in this browser.";
