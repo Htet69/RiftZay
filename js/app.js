@@ -116,6 +116,7 @@ function lowestListing(card) {
 
     function showToast(message, type) {
         const toast = $("#toast");
+        if (!toast) return;
         toast.textContent = message;
         toast.className = "toast" + (type ? " " + type : "");
         toast.hidden = false;
