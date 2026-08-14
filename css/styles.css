@@ -22,7 +22,7 @@
     --red: #e5484d;
     --red-bg: rgba(229, 72, 77, 0.1);
     --violet: #a78bfa;
-    --serif: "Instrument Serif", "Times New Roman", Georgia, serif;
+    --display: "Inter Tight", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
@@ -30,6 +30,21 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+/* Iceberg signature: faint vertical grid lines across the canvas */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: calc((100% - 90px) / 4) 100%, calc((100% - 90px) / 4) 100%, calc((100% - 90px) / 4) 100%;
+    background-position: 0 0, 50% 0, 100% 0;
 }
 
 html {
@@ -73,19 +88,21 @@ h3,
 .seller-listing-price,
 .trend-title,
 .buy-score-num {
-    font-family: var(--serif);
-    font-weight: 400;
-    letter-spacing: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
 }
 
 /* Signature parenthetical micro-label, e.g. ( Market ) */
 .kicker {
-    font-family: var(--serif);
-    font-size: 13px;
-    letter-spacing: 0.02em;
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
     color: var(--text-muted);
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
 }
 
 /* ================= MOTION (restrained) ================= */
@@ -242,16 +259,17 @@ em {
 }
 
 .brand-name {
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: 24px;
-    letter-spacing: 0.01em;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
     color: var(--text);
 }
 
 .brand-name em {
     color: var(--accent);
-    font-family: var(--serif);
+    font-family: var(--display);
 }
 
 /* Header search */
@@ -337,7 +355,7 @@ em {
 
 .suggest-group {
     padding: 10px 14px 4px;
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -412,14 +430,14 @@ em {
 }
 
 .suggest-price .sp-label {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 11px;
     text-transform: uppercase;
     color: var(--text-muted);
 }
 
 .suggest-price .sp-value {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 16px;
     color: var(--green);
     line-height: 1.1;
@@ -465,8 +483,8 @@ em {
 .main-nav a {
     color: var(--text-muted);
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+    font-weight: 600;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     padding: 4px 0;
     position: relative;
@@ -605,11 +623,11 @@ em {
 }
 
 .search-hero h1 {
-    font-size: clamp(40px, 6.5vw, 84px);
-    letter-spacing: -0.01em;
-    line-height: 1.04;
-    margin-bottom: 22px;
-    max-width: 16em;
+    font-size: clamp(44px, 7.5vw, 96px);
+    letter-spacing: -0.03em;
+    line-height: 0.98;
+    margin-bottom: 24px;
+    max-width: 15em;
     animation: fadeIn 0.6s ease both;
 }
 
@@ -692,14 +710,14 @@ em {
 
 .stat strong {
     display: block;
-    font-size: 34px;
+    font-size: 40px;
     color: var(--text);
 }
 
 .stat span {
     color: var(--text-muted);
-    font-size: 12px;
-    letter-spacing: 0.05em;
+    font-size: 11px;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
 }
 
@@ -765,7 +783,7 @@ em {
 }
 
 .top-pick-badge {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 13px;
     letter-spacing: 0.02em;
     color: var(--green);
@@ -801,7 +819,7 @@ em {
 
 .top-pick-name {
     display: block;
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 30px;
     color: var(--text);
     text-decoration: none;
@@ -865,7 +883,7 @@ em {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 20px;
     color: var(--text);
 }
@@ -940,7 +958,7 @@ em {
 }
 
 .trend-pick-name {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 16px;
     color: var(--text);
     line-height: 1.25;
@@ -993,17 +1011,17 @@ em {
 
 .results-head h2,
 .section-title {
-    font-size: clamp(30px, 4.5vw, 48px);
-    letter-spacing: -0.01em;
+    font-size: clamp(34px, 5.5vw, 56px);
+    letter-spacing: -0.02em;
     margin: 0;
 }
 
 .section-sub {
     color: var(--text-muted);
-    font-size: 14.5px;
-    margin-top: 8px;
+    font-size: 14px;
+    margin-top: 10px;
     max-width: 640px;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 .results-meta {
@@ -1193,7 +1211,7 @@ em {
 }
 
 .market-strip .strip-price {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 17px;
     color: var(--text);
 }
@@ -1221,7 +1239,7 @@ em {
 }
 
 .community-strip .strip-price {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 15px;
     color: var(--text);
 }
@@ -1532,7 +1550,7 @@ em {
 
 .market-list-header {
     padding: 14px 0;
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 20px;
     letter-spacing: 0;
     border-bottom: 1px solid var(--border);
@@ -1569,7 +1587,7 @@ em {
     justify-content: center;
     font-size: 16px;
     flex-shrink: 0;
-    font-family: var(--serif);
+    font-family: var(--display);
 }
 
 .market-info {
@@ -1629,7 +1647,7 @@ em {
 }
 
 .product-flavor .flavor-label {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 14px;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -1945,7 +1963,7 @@ em {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 18px;
     flex-shrink: 0;
 }
@@ -2122,7 +2140,7 @@ em {
 }
 
 .buys-title a {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 20px;
     color: var(--text);
     text-decoration: none;
@@ -2373,7 +2391,7 @@ em {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 20px;
     letter-spacing: 0;
     margin-bottom: 12px;
@@ -2393,14 +2411,14 @@ em {
 }
 
 .pg-finish {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 15px;
     width: 100px;
     color: var(--text);
 }
 
 .pg-market {
-    font-family: var(--serif);
+    font-family: var(--display);
     font-size: 17px;
     color: var(--green);
 }
