@@ -246,16 +246,22 @@ body {
     border-color: rgba(139, 124, 246, 0.4);
 }
 
-/* Reduced motion */
+/* Reduced motion - only reduce, don't kill everything */
 @media (prefers-reduced-motion: reduce) {
 
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
+    .card-grid .tcg-card,
+    .search-hero h1,
+    .search-hero p,
+    .price-guide-note,
+    .hero-search,
+    .hero-stats,
+    .data-credibility {
+        animation-duration: 0.3s !important;
+    }
+
+    .brand-mark svg,
+    .search-hero::before {
+        animation: none !important;
     }
 }
 
