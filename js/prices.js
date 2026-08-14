@@ -19,7 +19,7 @@
     "use strict";
 
     var BASE = "https://tcgtracking.com/tcgapi/v1/89/sets/";
-    var LS_KEY = "riftzay_market_prices_v1";
+    var LS_KEY = "riftzay_market_prices_v2";
     var LS_AGE = 12 * 60 * 60 * 1000; // refresh market prices twice a day
 
     // All Riftbound sets that carry TCGplayer prices.
