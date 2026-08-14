@@ -222,14 +222,7 @@ em {
     border-radius: 5px;
     flex-shrink: 0;
     background: linear-gradient(150deg, #1a2b45, #0e1626 55%, #1b3352);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.85);
-    font-family: var(--font-display);
-    font-weight: 700;
     box-shadow: 0 2px 6px rgba(26, 36, 51, 0.25);
 }
 
@@ -240,6 +233,7 @@ em {
     height: 100%;
     object-fit: cover;
     display: block;
+    z-index: 1;
 }
 
 .suggest-info {
@@ -660,18 +654,13 @@ em {
     height: 100%;
     object-fit: cover;
     display: block;
+    z-index: 1;
 }
 
 .tcg-thumb-fallback {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.85);
+    background: radial-gradient(circle at 50% 35%, rgba(56, 96, 148, 0.35), transparent 60%);
 }
 
 .tcg-card-header {
@@ -1050,14 +1039,7 @@ em {
 .art-fallback {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 24px;
-    color: rgba(255, 255, 255, 0.9);
-    letter-spacing: 0.5px;
+    background: radial-gradient(circle at 50% 35%, rgba(56, 96, 148, 0.35), transparent 60%);
 }
 
 .card-art-img {
@@ -1067,6 +1049,7 @@ em {
     height: 100%;
     object-fit: cover;
     display: block;
+    z-index: 1;
 }
 
 .art-meta {

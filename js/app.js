@@ -267,7 +267,7 @@ function cardHTML(card) {
             (watched ? "★" : "☆") + "</button>" +
             '<div class="tcg-thumb">' +
             '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
-            '<div class="tcg-thumb-fallback">' + cardInitials(card) + "</div>" +
+            '<div class="tcg-thumb-fallback"></div>' +
             "</div>" +
             '<div class="tcg-card-header">' +
             "<div>" +
@@ -406,11 +406,6 @@ case "offers":
         return div.innerHTML;
     }
 
-    function cardInitials(card) {
-        const base = card.name.split(",")[0].trim();
-        return base.split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
-    }
-
     function buildSuggestCards(query) {
         if (!query) return [];
         const ql = query.toLowerCase();
@@ -461,7 +456,7 @@ case "offers":
             '<div class="suggest-item' + (isActive ? " active" : "") + '" data-suggest-card="' + card.slug + '">' +
             '<div class="suggest-art">' +
             '<img loading="lazy" decoding="async" src="' + card.art + '" alt="" onerror="this.style.display=\'none\'">' +
-            '<span class="suggest-art-fallback">' + cardInitials(card) + "</span>" +
+            '<span class="suggest-art-fallback"></span>' +
             "</div>" +
             '<div class="suggest-info">' +
             '<div class="suggest-name">' + escapeHTML(card.name) + "</div>" +
@@ -643,7 +638,7 @@ case "offers":
             '<div class="product-art">' +
             '<div class="card-art-frame">' +
             '<div class="card-art-holder">' +
-            '<div class="art-fallback">' + cardInitials(card) + "</div>" +
+            '<div class="art-fallback"></div>' +
             '<img class="card-art-img" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
             "</div>" +
             '<div class="art-meta">' +
