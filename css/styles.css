@@ -1,31 +1,32 @@
 /* =========================================================
-   RiftZay — clean, modern light theme
+   RiftZay — clean, modern dark theme
    ========================================================= */
 
 :root {
-    --bg: #f4f5f8;
-    --bg-alt: #ffffff;
-    --bg-card: #ffffff;
-    --bg-soft: #eef1f6;
-    --border: #e3e7ee;
-    --border-strong: #c9d0dd;
-    --text: #141b2b;
-    --text-muted: #5c6677;
-    --accent: #2f6fe4;
-    --accent-dark: #1e4fc0;
-    --accent-soft: #e9f0fe;
-    --accent-2: #1a73c4;
-    --gold: #b97a00;
-    --green: #14844c;
-    --green-bg: #e6f6ec;
-    --red: #d04848;
-    --red-bg: #fdecec;
-    --blue-bg: #e9f0fe;
-    --violet: #7a4dd0;
+    color-scheme: dark;
+    --bg: #0f1520;
+    --bg-alt: #131a27;
+    --bg-card: #182130;
+    --bg-soft: #1e293b;
+    --border: #26324a;
+    --border-strong: #3b4a68;
+    --text: #e6ebf5;
+    --text-muted: #93a0b8;
+    --accent: #5b9bff;
+    --accent-dark: #3f7df0;
+    --accent-soft: #1b2a47;
+    --accent-2: #66a3e8;
+    --gold: #f0b54a;
+    --green: #4cc98f;
+    --green-bg: #122b22;
+    --red: #f07171;
+    --red-bg: #361a1a;
+    --blue-bg: #1b2a47;
+    --violet: #a78bfa;
     --radius: 12px;
     --radius-sm: 8px;
-    --shadow: 0 1px 2px rgba(20, 27, 43, 0.05), 0 4px 14px rgba(20, 27, 43, 0.06);
-    --shadow-lg: 0 10px 34px rgba(20, 27, 43, 0.12);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 10px 34px rgba(0, 0, 0, 0.4);
     --font-display: "Sora", "Inter", sans-serif;
     --font-body: "Inter", sans-serif;
 }
@@ -72,7 +73,7 @@ em {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(15, 21, 32, 0.85);
     backdrop-filter: saturate(180%) blur(10px);
     border-bottom: 1px solid var(--border);
 }
@@ -165,8 +166,8 @@ em {
 
 .header-search input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 228, 0.14);
-    background: #fff;
+    box-shadow: 0 0 0 3px rgba(91, 155, 255, 0.18);
+    background: var(--bg-alt);
 }
 
 /* ================= SEARCH SUGGESTIONS (TCGplayer-style autocomplete) ================= */
@@ -175,7 +176,7 @@ em {
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--bg-alt);
     border: 1px solid var(--border);
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
@@ -350,7 +351,7 @@ em {
 
 .user-chip {
     background: var(--accent-soft);
-    border: 1px solid rgba(47, 111, 228, 0.28);
+    border: 1px solid rgba(91, 155, 255, 0.32);
     color: var(--accent);
     padding: 6px 14px;
     border-radius: 999px;
@@ -408,7 +409,7 @@ em {
 .btn-ghost {
     color: var(--text);
     border-color: var(--border-strong);
-    background: #fff;
+    background: var(--bg-alt);
 }
 
 .btn-ghost:hover {
@@ -423,8 +424,8 @@ em {
 /* ================= SEARCH HERO ================= */
 .search-hero {
     background:
-        radial-gradient(1100px 420px at 18% -10%, rgba(47, 111, 228, 0.1), transparent 60%),
-        radial-gradient(900px 380px at 85% 0%, rgba(122, 77, 208, 0.08), transparent 60%),
+        radial-gradient(1100px 420px at 18% -10%, rgba(91, 155, 255, 0.12), transparent 60%),
+        radial-gradient(900px 380px at 85% 0%, rgba(167, 139, 250, 0.1), transparent 60%),
         var(--bg);
     border-bottom: 1px solid var(--border);
     padding: 60px 0 46px;
@@ -456,7 +457,7 @@ em {
     width: fit-content;
     margin: 0 auto 24px;
     padding: 7px 14px;
-    border: 1px solid rgba(47, 111, 228, 0.2);
+    border: 1px solid rgba(91, 155, 255, 0.25);
     border-radius: 999px;
     background: var(--accent-soft);
     color: var(--text-muted);
@@ -485,7 +486,7 @@ em {
 
 .hero-search input {
     width: 100%;
-    background: #fff;
+    background: var(--bg-alt);
     border: 1px solid var(--border-strong);
     color: var(--text);
     padding: 15px 22px 15px 50px;
@@ -499,7 +500,7 @@ em {
 
 .hero-search input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(47, 111, 228, 0.16), var(--shadow-lg);
+    box-shadow: 0 0 0 4px rgba(91, 155, 255, 0.18), var(--shadow-lg);
 }
 
 .hero-stats {
@@ -568,7 +569,7 @@ em {
 }
 
 .results-meta select {
-    background: #fff;
+    background: var(--bg-alt);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 8px 12px;
@@ -597,7 +598,7 @@ em {
 }
 
 .filter-bar select {
-    background: #fff;
+    background: var(--bg-alt);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 9px 14px;
@@ -619,7 +620,7 @@ em {
 
 .filter-bar select:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 228, 0.12);
+    box-shadow: 0 0 0 3px rgba(91, 155, 255, 0.18);
 }
 
 /* ================= CARD GRID ================= */
@@ -654,7 +655,7 @@ em {
     height: 220px;
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid rgba(20, 27, 43, 0.1);
+    border: 1px solid rgba(230, 235, 245, 0.1);
     background: linear-gradient(150deg, #243247, #141d30 55%, #24364f);
     margin-bottom: 12px;
 }
@@ -708,7 +709,7 @@ em {
     letter-spacing: 0.5px;
     color: var(--accent);
     background: var(--accent-soft);
-    border: 1px solid rgba(47, 111, 228, 0.2);
+    border: 1px solid rgba(91, 155, 255, 0.22);
     padding: 2px 8px;
     border-radius: 999px;
     margin-bottom: 10px;
@@ -722,8 +723,8 @@ em {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--violet);
-    background: rgba(122, 77, 208, 0.08);
-    border: 1px solid rgba(122, 77, 208, 0.25);
+    background: rgba(167, 139, 250, 0.1);
+    border: 1px solid rgba(167, 139, 250, 0.28);
     padding: 2px 7px;
     border-radius: 999px;
     vertical-align: middle;
@@ -740,38 +741,38 @@ em {
 }
 
 .rarity-common {
-    background: #eef1f5;
-    color: #5c6677;
+    background: #252d3d;
+    color: #a7b0c0;
 }
 
 .rarity-uncommon {
-    background: #e2f0fb;
-    color: #1667a8;
+    background: #14334d;
+    color: #6fc3ff;
 }
 
 .rarity-rare {
-    background: #e9f0fe;
-    color: #2f6fe4;
+    background: #1b2a47;
+    color: #5b9bff;
 }
 
 .rarity-epic {
-    background: #efedfb;
-    color: #6a3fd0;
+    background: #2a2050;
+    color: #a78bfa;
 }
 
 .rarity-showcase {
-    background: linear-gradient(135deg, #fdf3e0, #fce8c2);
-    color: #a86a00;
+    background: linear-gradient(135deg, #3a2c12, #332409);
+    color: #f0b54a;
 }
 
 .rarity-legendary {
-    background: #fdf3e0;
-    color: #b97a00;
+    background: #3a2c12;
+    color: #f0b54a;
 }
 
 .rarity-mythic {
-    background: #fdecec;
-    color: #d04848;
+    background: #361a1a;
+    color: #f07171;
 }
 
 /* Compact market strip on cards */
@@ -1026,7 +1027,7 @@ em {
 }
 
 .card-art-frame {
-    background: linear-gradient(160deg, #f0f4fb 0%, #e3ecf8 100%);
+    background: linear-gradient(160deg, #1a2438 0%, #141c2e 100%);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 22px;
@@ -1041,8 +1042,8 @@ em {
     width: 100%;
     aspect-ratio: 744 / 1039;
     border-radius: 12px;
-    border: 1px solid rgba(20, 27, 43, 0.12);
-    box-shadow: 0 8px 22px rgba(20, 27, 43, 0.35);
+    border: 1px solid rgba(230, 235, 245, 0.1);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
     margin-bottom: 16px;
     overflow: hidden;
     background: linear-gradient(150deg, #243247, #141d30 55%, #24364f);
@@ -1089,7 +1090,7 @@ em {
     letter-spacing: 0.5px;
     color: var(--accent);
     background: var(--accent-soft);
-    border: 1px solid rgba(47, 111, 228, 0.18);
+    border: 1px solid rgba(91, 155, 255, 0.22);
     padding: 3px 10px;
     border-radius: 999px;
     display: inline-block;
@@ -1161,7 +1162,7 @@ em {
 }
 
 .price-box.best-box {
-    border-color: rgba(20, 132, 76, 0.5);
+    border-color: rgba(76, 201, 143, 0.5);
     background: var(--green-bg);
 }
 
@@ -1213,7 +1214,7 @@ em {
 }
 
 .market-row.best-row:hover {
-    background: #ddf3e6;
+    background: #17372c;
 }
 
 .market-logo {
@@ -1323,8 +1324,8 @@ em {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(16, 24, 38, 0.5);
-    backdrop-filter: blur(3px);
+    background: rgba(6, 9, 15, 0.65);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1431,7 +1432,7 @@ em {
 
 .field input {
     width: 100%;
-    background: #fff;
+    background: var(--bg-alt);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 11px 14px;
@@ -1444,7 +1445,7 @@ em {
 
 .field input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 228, 0.14);
+    box-shadow: 0 0 0 3px rgba(91, 155, 255, 0.18);
 }
 
 .field .field-hint {
@@ -1458,7 +1459,7 @@ em {
 
 .form-error {
     background: var(--red-bg);
-    border: 1px solid rgba(208, 72, 72, 0.3);
+    border: 1px solid rgba(240, 113, 113, 0.32);
     color: var(--red);
     padding: 10px 14px;
     border-radius: var(--radius-sm);
@@ -1472,7 +1473,7 @@ em {
     align-items: center;
     gap: 8px;
     background: var(--accent-soft);
-    border: 1px solid rgba(47, 111, 228, 0.2);
+    border: 1px solid rgba(91, 155, 255, 0.25);
     color: var(--text-muted);
     font-size: 13px;
     padding: 8px 12px;
@@ -1498,8 +1499,8 @@ em {
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: #141b2b;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #2a3448;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     color: #fff;
     padding: 13px 22px;
     border-radius: 10px;
@@ -1517,11 +1518,11 @@ em {
 }
 
 .toast.success {
-    border-color: rgba(20, 132, 76, 0.6);
+    border-color: rgba(76, 201, 143, 0.6);
 }
 
 .toast.error {
-    border-color: rgba(208, 72, 72, 0.6);
+    border-color: rgba(240, 113, 113, 0.6);
 }
 
 @keyframes toastIn {
@@ -1597,13 +1598,13 @@ em {
 .mode-chip.cloud {
     background: var(--green-bg);
     color: var(--green);
-    border: 1px solid rgba(20, 132, 76, 0.4);
+    border: 1px solid rgba(76, 201, 143, 0.4);
 }
 
 .mode-chip.local {
-    background: rgba(255, 193, 7, 0.12);
-    color: #8a6d00;
-    border: 1px solid rgba(214, 158, 0, 0.35);
+    background: rgba(255, 193, 7, 0.1);
+    color: #f0c24a;
+    border: 1px solid rgba(240, 194, 74, 0.3);
 }
 
 /* ================= RESPONSIVE ================= */
@@ -1701,12 +1702,12 @@ em {
 /* ================= COMMUNITY LISTINGS ================= */
 .btn-danger {
     background: var(--red-bg);
-    border-color: rgba(208, 72, 72, 0.3);
+    border-color: rgba(240, 113, 113, 0.32);
     color: var(--red);
 }
 
 .btn-danger:hover {
-    background: #f9dddd;
+    background: #412020;
 }
 
 .btn-sm {
@@ -1783,7 +1784,7 @@ em {
 
 .field select {
     width: 100%;
-    background: #fff;
+    background: var(--bg-alt);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 11px 14px;
@@ -1795,7 +1796,7 @@ em {
 
 .field select:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47, 111, 228, 0.14);
+    box-shadow: 0 0 0 3px rgba(91, 155, 255, 0.18);
 }
 
 .form-help {
