@@ -161,7 +161,7 @@
                         <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" />
                     </svg>
-                    <input id="hero-search-input" type="search" placeholder="e.g. Sett, Jinx, Vendetta, mythic…"
+                    <input id="hero-search-input" type="search" placeholder="e.g. Rogue Assassin, Vendetta, Showcase, Legend…"
                         autocomplete="off" aria-label="Search hero" />
                     <div class="search-suggest hero-suggest" id="hero-suggest" hidden></div>
                 </div>
@@ -182,35 +182,22 @@
                         <option value="name">Sort: Name</option>
                         <option value="lowest">Sort: Lowest Price</option>
                         <option value="highest">Sort: Highest Price</option>
-                        <option value="spread">Sort: Biggest Gap</option>
+                        <option value="offers">Sort: Most Offers</option>
                         <option value="newest">Sort: Newest Set</option>
                     </select>
                 </div>
             </div>
 
-            <!-- TCGplayer-style filters -->
+            <!-- TCGplayer-style filters (options are built from the live card data) -->
             <div class="filter-bar">
                 <select id="filter-set" aria-label="Filter by set">
                     <option value="">All Sets</option>
-                    <option value="Riftbound: Origins">Riftbound: Origins (RBO)</option>
-                    <option value="Riftbound: Spiritforged">Riftbound: Spiritforged (RBS)</option>
-                    <option value="Riftbound: Vendetta">Riftbound: Vendetta (RBV)</option>
                 </select>
                 <select id="filter-rarity" aria-label="Filter by rarity">
                     <option value="">All Rarities</option>
-                    <option value="common">Common</option>
-                    <option value="uncommon">Uncommon</option>
-                    <option value="rare">Rare</option>
-                    <option value="epic">Epic</option>
-                    <option value="legendary">Legendary</option>
-                    <option value="mythic">Mythic</option>
                 </select>
                 <select id="filter-type" aria-label="Filter by card type">
                     <option value="">All Types</option>
-                    <option value="champion">Champion</option>
-                    <option value="origin">Origin</option>
-                    <option value="battlefield">Battlefield</option>
-                    <option value="spell">Spell</option>
                 </select>
             </div>
 
@@ -274,7 +261,10 @@
 <!-- Supabase browser client (cloud mode). Remove only if you stay in local mode. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
-    <script src="js/seed.js"></script>
+    <!-- Bundled snapshot of the real Riftbound catalog (offline/fallback) -->
+    <script src="data/cards.js"></script>
+    <!-- Loader: fetches the freshest daily snapshot, then exposes the catalog -->
+    <script src="js/cards.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>

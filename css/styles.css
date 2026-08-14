@@ -216,6 +216,7 @@ em {
 }
 
 .suggest-art {
+    position: relative;
     width: 34px;
     height: 47px;
     border-radius: 5px;
@@ -224,11 +225,21 @@ em {
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
     font-size: 13px;
     color: rgba(255, 255, 255, 0.85);
     font-family: var(--font-display);
     font-weight: 700;
     box-shadow: 0 2px 6px rgba(26, 36, 51, 0.25);
+}
+
+.suggest-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .suggest-info {
@@ -630,6 +641,39 @@ em {
     box-shadow: var(--shadow-lg);
 }
 
+/* Real card-art thumbnail */
+.tcg-thumb {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(26, 36, 51, 0.12);
+    background: linear-gradient(150deg, #1a2b45, #0e1626 55%, #1b3352);
+    margin-bottom: 12px;
+}
+
+.tcg-thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tcg-thumb-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .tcg-card-header {
     display: flex;
     justify-content: space-between;
@@ -669,6 +713,21 @@ em {
     margin-bottom: 10px;
 }
 
+.champ-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #7a4dd0;
+    background: rgba(122, 77, 208, 0.08);
+    border: 1px solid rgba(122, 77, 208, 0.25);
+    padding: 2px 7px;
+    border-radius: 999px;
+    vertical-align: middle;
+}
+
 .rarity {
     font-size: 11px;
     font-weight: 700;
@@ -697,6 +756,11 @@ em {
 .rarity-epic {
     background: #efedfb;
     color: #5b4bd5;
+}
+
+.rarity-showcase {
+    background: linear-gradient(135deg, #fdf3e0, #fce8c2);
+    color: #a86a00;
 }
 
 .rarity-legendary {
@@ -892,18 +956,19 @@ em {
     box-shadow: var(--shadow);
 }
 
-.card-art {
+.card-art-holder {
+    position: relative;
     width: 100%;
-    aspect-ratio: 63 / 88;
+    aspect-ratio: 744 / 1039;
     border-radius: 12px;
     border: 1px solid rgba(26, 36, 51, 0.12);
-    background: linear-gradient(150deg, #1a2b45, #0e1626 55%, #1b3352);
-    position: relative;
     box-shadow: 0 8px 22px rgba(26, 36, 51, 0.35);
     margin-bottom: 16px;
+    overflow: hidden;
+    background: linear-gradient(150deg, #1a2b45, #0e1626 55%, #1b3352);
 }
 
-.card-art .art-text {
+.art-fallback {
     position: absolute;
     inset: 0;
     display: flex;
@@ -911,19 +976,18 @@ em {
     justify-content: center;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 20px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.92);
-    padding: 24px;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.9);
     letter-spacing: 0.5px;
 }
 
-.card-art .art-glow {
+.card-art-img {
     position: absolute;
     inset: 0;
-    border-radius: 12px;
-    background: radial-gradient(circle at 30% 20%, rgba(0, 127, 170, 0.35), transparent 55%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .art-meta {
@@ -1151,6 +1215,34 @@ em {
     font-size: 14.5px;
     line-height: 1.6;
     max-width: 600px;
+}
+
+/* Card ability text (real card text, can contain line breaks) */
+.ability-text {
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+/* Unit stats line (Energy / Power / Might) */
+.card-stats {
+    display: flex;
+    gap: 14px;
+    margin: 10px 0 18px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft, #f5f8fc);
+    border: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 13.5px;
+    flex-wrap: wrap;
+}
+
+.product-artist {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--text-muted);
 }
 
 /* ================= MODALS ================= */

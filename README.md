@@ -1,13 +1,15 @@
 # RiftZay — live community Riftbound marketplace
 
-RiftZay is a TCGplayer-style marketplace for Riftbound cards, built for your local community. Sellers publish live listings; every member sees the same shared marketplace in real time, with prices in MMK (with an approximate USD equivalent) and local contact details.
+RiftZay is a TCGplayer-style marketplace for Riftbound cards, built for your local community. Sellers publish live listings; every member sees the same shared marketplace in real time, with prices in MMK (with an approximate USD equivalent) and local contact details. The card catalog is the **real Riftbound card database** and refreshes itself daily.
 
 ## What works
 
-- Search by card name, set, code, rarity, type, or flavor text
-- Autocomplete with keyboard navigation and price previews
+- **Real cards** — the full official Riftbound catalog (~1,100 cards: Origins, Proving Grounds, Spiritforged, Unleashed, Vendetta) with artwork, card text, rarities, and set/collector numbers
+- **Always up to date** — the catalog re-fetches a fresh daily snapshot in the background (see "How the catalog updates" below)
+- Search by card name, subtitle, set, code, rarity, type, or card text
+- Autocomplete with keyboard navigation, card art, and price previews
 - Filter and sort the full catalog
-- Card page with Lowest / Market Average / Available from live community offers
+- Card page with real art, ability text, and Lowest / Market Average / Available from live community offers
 - Sell flow: publish a listing with condition, variant, MMK price, quantity, city, and contact
 - Shared accounts + private watchlist per member
 - Real-time listing updates (a new offer appears immediately for everyone)
@@ -40,13 +42,23 @@ RiftZay/
 ├── index.html
 ├── supabase.sql
 ├── css/styles.css
+├── data/
+│   └── cards.js        (bundled snapshot of the real catalog — fallback/offline)
 └── js/
     ├── config.js
-    ├── seed.js
+    ├── cards.js        (loader: fetches the freshest daily snapshot)
     ├── api.js
     └── app.js
 ```
 
+## How the catalog updates
+
+The app loads `data/cards.js` instantly (a bundled snapshot), then silently fetches the **latest daily snapshot** from the [`LouisCourrian/riftbound-cards`](https://github.com/LouisCourrian/riftbound-cards) Hugging Face mirror, which is scraped from the official Riftbound Card Gallery and republished automatically every day when anything changes. The freshest copy is cached in each visitor's browser (24h), so:
+
+- New sets / cards / errata appear automatically — no redeploy needed.
+- If the network is unavailable, the bundled snapshot keeps the site working.
+- Card names, ability text, artwork, and set names are © Riot Games, mirrored for non-commercial community use under Riot's fan-content policy.
+
 ## Price-data note
 
-Listing prices are the **live community listings** members publish in MMK (the USD equivalent next to them is computed locally from `MMK_PER_USD` and is only an estimate). Confirm card condition, identity, payment, and delivery details before trading.
+Listing prices are the **live community listings** members publish in MMK (the USD equivalent next to them is computed locally from `MMK_PER_USD` and is only an estimate). This is a community marketplace, not a TCGplayer data feed — the prices that matter come from your own sellers. Confirm card condition, identity, payment, and delivery details before trading.

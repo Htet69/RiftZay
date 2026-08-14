@@ -8,10 +8,11 @@
     };
 
     const API = window.RIFTZAY_API;
-    const MARKETS = RIFTZAY_MARKETS;
-    const CARDS = RIFTZAY_CARDS;
-    const CARD_BY_SLUG = RIFTZAY_CARD_BY_SLUG;
-    const SETS = RIFTZAY_SETS;
+
+    // Populated from js/cards.js once the real catalog has loaded (see init)
+    let CARDS = [];
+    let CARD_BY_SLUG = {};
+    let SETS = {};
 
     let currentUser = null;
     let myWatchlist = [];
@@ -29,121 +30,6 @@
     let suggestActiveSource = null; // "header" | "hero"
     let suggestIndex = -1;
     let suggestCards = [];
-
-    // Riftcodex API state
-    let allCards = [];
-    let cardBySlug = {};
-
-    /* Riftcodex API configuration */
-    const RIFTZAY_API_BASE = "https://api.riftcodex.com";
-
-    /* Build a RiftZay card object from Riftcodex API data */
-    function buildRiftZayCard(apiCard) {
-        const name = apiCard.name;
-        const setId = apiCard.set.set_id;
-        const setName = {
-            "RBO": "Riftbound: Origins",
-            "RBS": "Riftbound: Spiritforged",
-            "RBV": "Riftbound: Vendetta",
-            "UNL": "Riftbound: Unleashed",
-            "OPP": "Riftbound Organized Play"
-        }[setId] || "Riftbound: Unleashed";
-        const rarity = {
-            "Common": "common",
-            "Uncommon": "uncommon",
-            "Rare": "rare",
-            "Epic": "epic",
-            "Legend": "legendary",
-            "Promo": "mythic"
-        }[apiCard.classification.rarity] || "common";
-        const collectorNumber = apiCard.collector_number || 1;
-        const apiType = apiCard.classification.type;
-        const typeMap = {
-            "Champion": "champion",
-            "Unit": "champion",
-            "Spell": "spell",
-            "Gear": "spell",
-            "Battlefield": "battlefield"
-        };
-        const type = typeMap[apiType] || "champion";
-        const basePrices = {
-            common: { tcgplayer: 0.18, cardmarket: 0.14, ebay: 0.28, cardtrader: 0.12, amazon: 0.45, trollandtoad: 0.20 },
-            uncommon: { tcgplayer: 0.55, cardmarket: 0.48, ebay: 0.75, cardtrader: 0.42, amazon: 1.10, trollandtoad: 0.60 },
-            rare: { tcgplayer: 2.20, cardmarket: 1.95, ebay: 2.90, cardtrader: 1.80, amazon: 3.80, trollandtoad: 2.40 },
-            epic: { tcgplayer: 7.50, cardmarket: 6.80, ebay: 9.20, cardtrader: 6.40, amazon: 12.00, trollandtoad: 8.00 },
-            legendary: { tcgplayer: 18.00, cardmarket: 16.00, ebay: 22.00, cardtrader: 15.00, amazon: 26.00, trollandtoad: 19.50 },
-            mythic: { tcgplayer: 42.00, cardmarket: 38.00, ebay: 50.00, cardtrader: 35.00, amazon: 58.00, trollandtoad: 45.00 }
-        }[rarity] || { tcgplayer: 0.18, cardmarket: 0.14, ebay: 0.28, cardtrader: 0.12, amazon: 0.45, trollandtoad: 0.20 };
-        const pop = {
-            "Sett": 1.8, "Jinx": 1.7, "Ahri": 1.6, "Yasuo": 1.6, "Lux": 1.5, "Garen": 1.4,
-            "Darius": 1.4, "Vayne": 1.4, "Zed": 1.5, "Thresh": 1.4, "Lee Sin": 1.5,
-            "Viktor": 1.3, "Annie": 1.2, "Master Yi": 1.3, "Ezreal": 1.4, "Ashe": 1.3,
-            "Teemo": 1.5, "Braum": 1.2, "Caitlyn": 1.3, "Morgana": 1.3, "Nasus": 1.2,
-            "Riven": 1.4, "Sona": 1.1, "Swain": 1.2, "Tristana": 1.2, "Twisted Fate": 1.3,
-            "Warwick": 1.2, "Jax": 1.3, "Katarina": 1.4, "Malphite": 1.1, "Nami": 1.1,
-            "Olaf": 1.1, "Pantheon": 1.2, "Poppy": 1.1, "Quinn": 1.0, "Rammus": 1.0,
-            "Shen": 1.1, "Singed": 1.1, "Sion": 1.1, "Sivir": 1.0, "Soraka": 1.1,
-            "Taric": 1.0, "Tryndamere": 1.2, "Udyr": 1.1, "Varus": 1.2, "Veigar": 1.2,
-            "Volibear": 1.2, "Wukong": 1.1, "Xayah": 1.2, "Xin Zhao": 1.1, "Yorick": 1.0,
-            "Zac": 1.1, "Ziggs": 1.1, "Zilean": 1.0, "Zyra": 1.1,
-            "Aatrox": 1.4, "Akali": 1.5, "Aphelios": 1.3, "Aurelion Sol": 1.3, "Azir": 1.2,
-            "Bard": 1.1, "Bel'Veth": 1.2, "Blitzcrank": 1.2, "Brand": 1.2, "Cassiopeia": 1.1,
-            "Cho'Gath": 1.2, "Corki": 1.0, "Diana": 1.3, "Draven": 1.4, "Dr. Mundo": 1.1,
-            "Ekko": 1.3, "Elise": 1.1, "Evelynn": 1.2, "Fiddlesticks": 1.2, "Fiora": 1.3,
-            "Fizz": 1.3, "Galio": 1.1, "Gangplank": 1.2, "Gnar": 1.1, "Gragas": 1.1,
-            "Graves": 1.3, "Gwen": 1.3, "Hecarim": 1.2, "Heimerdinger": 1.2, "Illaoi": 1.1,
-            "Irelia": 1.4, "Ivern": 1.0, "Janna": 1.1, "Jarvan IV": 1.2, "Jayce": 1.3,
-            "Jhin": 1.4, "Kai'Sa": 1.4, "Kalista": 1.2, "Karma": 1.1, "Karthus": 1.1,
-            "Kassadin": 1.2, "Kled": 1.1, "Kog'Maw": 1.1, "LeBlanc": 1.3, "Leona": 1.1,
-            "Lillia": 1.1, "Lissandra": 1.2, "Lucian": 1.3, "Lulu": 1.1, "Malzahar": 1.1,
-            "Maokai": 1.1, "Miss Fortune": 1.3, "Mordekaiser": 1.3, "Neeko": 1.1,
-            "Nidalee": 1.2, "Nocturne": 1.2, "Nunu": 1.1, "Orianna": 1.2, "Ornn": 1.2,
-            "Pyke": 1.3, "Qiyana": 1.2, "Rakan": 1.2, "Rek'Sai": 1.1, "Rell": 1.1,
-            "Renata": 1.1, "Renekton": 1.2, "Rengar": 1.3, "Rumble": 1.1, "Ryze": 1.2,
-            "Samira": 1.3, "Sejuani": 1.1, "Senna": 1.3, "Seraphine": 1.2, "Shaco": 1.2,
-            "Shyvana": 1.2, "Skarner": 1.0, "Sylas": 1.3, "Syndra": 1.2, "Tahm Kench": 1.1,
-            "Taliyah": 1.2, "Talon": 1.2, "Vex": 1.2, "Vi": 1.3, "Viego": 1.4,
-            "Vladimir": 1.2, "Yone": 1.5, "Yuumi": 1.2, "Zeri": 1.3,
-        }[name.split(",")[0].trim()] || 1.0;
-        // Deterministic variation so same-rarity cards differ
-        const variation = 0.85 + ((collectorNumber || 1) % 30) / 100;
-
-        // Generate slug from name and set
-        const slug = name.toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "") + "-" + (setName.split(" ")[2] || "unl").toLowerCase();
-
-        // Generate prices for all 6 markets
-        const prices = {};
-        const markets = ["tcgplayer", "cardmarket", "ebay", "cardtrader", "amazon", "trollandtoad"];
-        markets.forEach(function (market) {
-            prices[market] = Math.max(0.03, Math.round(basePrices[market] * pop * variation * 100) / 100);
-        });
-
-        // Create market entries sorted by price
-        const marketEntries = markets.map(function (market) { return { market, price: prices[market] }; });
-        marketEntries.sort(function (a, b) { return a.price - b.price; });
-
-        // Flavor text
-        const flavor = (apiCard.text && apiCard.text.flavour) || "";
-
-        return {
-            slug: slug,
-            name: name,
-            set: setName,
-            rarity: rarity,
-            number: collectorNumber,
-            type: type,
-            flavor: flavor,
-            prices: prices,
-            marketEntries: marketEntries,
-            lowest: marketEntries[0],
-            highest: marketEntries[marketEntries.length - 1],
-            spread: marketEntries[marketEntries.length - 1].price - marketEntries[0].price,
-            setCode: setId,
-            setYear: new Date().getFullYear()
-        };
-    }
 
     /* ---------- Helpers ---------- */
 
@@ -179,24 +65,9 @@
             .sort(function (a, b) { return Number(a.price_mmk) - Number(b.price_mmk); });
     }
 
-    function lowestListing(card) {
+function lowestListing(card) {
         return listingsForCard(card.slug)[0] || null;
     }
-
-    const marketName = function (key) {
-        const m = MARKETS.find(function (m) { return m.key === key; });
-        return m ? m.name : key;
-    };
-
-    const marketLogo = function (key) {
-        const m = MARKETS.find(function (m) { return m.key === key; });
-        return m ? m.logo : "🏪";
-    };
-
-    const marketRegion = function (key) {
-        const m = MARKETS.find(function (m) { return m.key === key; });
-        return m ? m.region : "";
-    };
 
     const cap = function (s) {
         return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -348,29 +219,33 @@
 
     /* ---------- Card grid (search results) ---------- */
 
-    function cardHTML(card) {
+function cardHTML(card) {
         const watched = currentUser && myWatchlist.indexOf(card.slug) !== -1;
         const offers = listingsForCard(card.slug);
         const low = offers[0] || null;
 
         const typeLabel = card.type ? cap(card.type) : "";
+        const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
 
         return (
             '<article class="tcg-card">' +
             '<button class="watch-btn' + (watched ? " watched" : "") + '" data-watch="' + card.slug + '" title="' +
             (watched ? "Remove from watchlist" : "Add to watchlist") + '">' +
             (watched ? "★" : "☆") + "</button>" +
+            '<div class="tcg-thumb">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<div class="tcg-thumb-fallback">' + cardInitials(card) + "</div>" +
+            "</div>" +
             '<div class="tcg-card-header">' +
             "<div>" +
-            '<h3 data-detail="' + card.slug + '">' + card.name + "</h3>" +
-            '<div class="set-name">' + card.set + ' · ' + card.setCode + " " + card.number +
-            (card.setYear ? " (" + card.setYear + ")" : "") + "</div>" +
+            '<h3 data-detail="' + card.slug + '">' + escapeHTML(card.name) + "</h3>" +
+            '<div class="set-name">' + card.set + ' · ' + card.setCode + " " + card.number + "</div>" +
             "</div>" +
-            '<span class="rarity rarity-' + card.rarity + '">' + card.rarity + "</span>" +
+            '<span class="rarity rarity-' + card.rarity + '">' + cap(card.rarity) + "</span>" +
             "</div>" +
-            (typeLabel ? '<div class="card-type">' + typeLabel + "</div>" : "") +
+            (typeLabel ? '<div class="card-type">' + typeLabel + champTag + "</div>" : "") +
             '<div class="market-strip">' +
-(low
+            (low
                 ? '<span class="strip-label">From</span><span class="strip-price best">' + priceDual(low.price_mmk) + '</span><span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>"
                 : '<span class="no-listings">No active listings</span>') +
             "</div>" +
@@ -429,7 +304,7 @@
                     return (bp ? bp.price_mmk : -1) - (ap ? ap.price_mmk : -1);
                 });
                 break;
-            case "spread":
+case "offers":
                 filtered = filtered.slice().sort(function (a, b) {
                     return listingsForCard(b.slug).length - listingsForCard(a.slug).length;
                 });
@@ -439,7 +314,7 @@
                     const ya = parseInt(a.setYear, 10) || 0;
                     const yb = parseInt(b.setYear, 10) || 0;
                     if (yb !== ya) return yb - ya;
-                    return a.number - b.number;
+                    return cardNumber(a) - cardNumber(b);
                 });
                 break;
             default:
@@ -479,7 +354,7 @@
 
     /* ---------- TCGplayer-style live search suggestions ---------- */
 
-    const RARITY_ORDER = { mythic: 6, legendary: 5, epic: 4, rare: 3, uncommon: 2, common: 1 };
+    const RARITY_ORDER = { showcase: 5, epic: 4, rare: 3, uncommon: 2, common: 1 };
 
     function escapeHTML(s) {
         const div = document.createElement("div");
@@ -535,11 +410,14 @@
         const low = lowestListing(card);
         return (
             '<div class="suggest-item' + (isActive ? " active" : "") + '" data-suggest-card="' + card.slug + '">' +
-            '<div class="suggest-art">' + cardInitials(card) + "</div>" +
+            '<div class="suggest-art">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="" onerror="this.style.display=\'none\'">' +
+            '<span class="suggest-art-fallback">' + cardInitials(card) + "</span>" +
+            "</div>" +
             '<div class="suggest-info">' +
-            '<div class="suggest-name">' + card.name + "</div>" +
+            '<div class="suggest-name">' + escapeHTML(card.name) + "</div>" +
             '<div class="suggest-set">' + card.set + " · " + card.setCode + " " + card.number + "</div>" +
-            '<span class="suggest-rarity ' + rarityClass + '">' + card.rarity + "</span>" +
+            '<span class="suggest-rarity ' + rarityClass + '">' + cap(card.rarity) + "</span>" +
             "</div>" +
             '<div class="suggest-price">' +
             '<div class="sp-label">' + (low ? "From" : "Community") + "</div>" +
@@ -678,26 +556,34 @@
         }).join("") || '<div class="listing-empty"><strong>No active listings yet.</strong><span>Be the first community member to offer this card.</span></div>';
 
         const typeLabel = card.type ? cap(card.type) : "Card";
+        const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
+
+        const stats = [];
+        if (card.energy !== null && card.energy !== undefined) stats.push("Energy " + card.energy);
+        if (card.power !== null && card.power !== undefined) stats.push("Power " + card.power);
+        if (card.might !== null && card.might !== undefined) stats.push("Might " + card.might);
+        const statsHTML = stats.length ? '<div class="card-stats">' + stats.join(" · ") + "</div>" : "";
 
         $("#product-content").innerHTML =
             '<div class="product-layout">' +
             '<div class="product-art">' +
             '<div class="card-art-frame">' +
-            '<div class="card-art">' +
-            '<div class="art-glow"></div>' +
-            '<div class="art-text">' + card.name + "</div>" +
+            '<div class="card-art-holder">' +
+            '<div class="art-fallback">' + cardInitials(card) + "</div>" +
+            '<img class="card-art-img" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
             "</div>" +
             '<div class="art-meta">' +
-            '<div class="art-number">' + card.setCode + " " + card.number + " / 108</div>" +
+            '<div class="art-number">' + card.setCode + " " + card.number + "</div>" +
             '<div class="art-set">' + card.set + " · " + card.setYear + "</div>" +
-            '<div><span class="rarity rarity-' + card.rarity + '">' + card.rarity + "</span></div>" +
-            '<div class="art-type">' + typeLabel + "</div>" +
+            '<div><span class="rarity rarity-' + card.rarity + '">' + cap(card.rarity) + "</span></div>" +
+            '<div class="art-type">' + typeLabel + champTag + "</div>" +
             "</div>" +
             "</div>" +
             "</div>" +
             '<div class="product-info">' +
-            "<h1>" + card.name + "</h1>" +
-            '<div class="product-sub"><strong>' + card.set + "</strong> · Set #" + card.number + " · " + typeLabel + "</div>" +
+            "<h1>" + escapeHTML(card.name) + "</h1>" +
+            '<div class="product-sub"><strong>' + card.set + "</strong> · #" + card.number + " · " + typeLabel + champTag + "</div>" +
+            statsHTML +
             '<div class="price-summary">' +
             '<div class="price-box best-box">' +
             '<div class="pb-label">Lowest Listing</div>' +
@@ -728,9 +614,12 @@
             '<p class="price-disclaimer">RiftZay connects buyers and sellers. Confirm card condition, identity, payment, and delivery details before completing a trade.</p>' +
             (card.flavor
                 ? '<div class="product-flavor">' +
-                '<div class="flavor-label">Flavor Text</div>' +
-                '<div class="flavor-text">\u201c' + card.flavor + '\u201d</div>' +
+                '<div class="flavor-label">Card Text</div>' +
+                '<div class="ability-text">' + escapeHTML(card.flavor) + "</div>" +
                 "</div>"
+                : "") +
+            (card.artist
+                ? '<div class="product-artist">Art by ' + escapeHTML(card.artist) + "</div>"
                 : "") +
             "</div>" +
             "</div>";
@@ -897,9 +786,57 @@
 
     /* ---------- Init ---------- */
 
+    /* Leading number of a card number like "139-166" or "sp2-006" */
+    function cardNumber(card) {
+        const m = String(card.number || "").match(/\d+/);
+        return m ? parseInt(m[1], 10) : 0;
+    }
+
+    /* Build the set / rarity / type filter dropdowns from the live catalog */
+    function populateFilters() {
+        const setSel = $("#filter-set");
+        setSel.innerHTML = '<option value="">All Sets</option>' + Object.keys(SETS)
+            .sort(function (a, b) { return SETS[b].year - SETS[a].year || a.localeCompare(b); })
+            .map(function (s) {
+                const m = SETS[s];
+                return '<option value="' + s + '">' + s + " (" + m.code + ", " + m.count + " cards)</option>";
+            }).join("");
+
+        const rarities = [];
+        CARDS.forEach(function (c) { if (rarities.indexOf(c.rarity) === -1) rarities.push(c.rarity); });
+        rarities.sort(function (a, b) {
+            const order = { common: 1, uncommon: 2, rare: 3, epic: 4, showcase: 5 };
+            return (order[a] || 0) - (order[b] || 0);
+        });
+        $("#filter-rarity").innerHTML = '<option value="">All Rarities</option>' + rarities
+            .map(function (r) { return '<option value="' + r + '">' + cap(r) + "</option>"; }).join("");
+
+        const types = [];
+        CARDS.forEach(function (c) { if (types.indexOf(c.type) === -1) types.push(c.type); });
+        types.sort(function (a, b) { return a.localeCompare(b); });
+        $("#filter-type").innerHTML = '<option value="">All Types</option>' + types
+            .map(function (t) { return '<option value="' + t + '">' + t + "</option>"; }).join("");
+    }
+
     async function init() {
         updateModeBanner();
         updateModeChip();
+
+        // Load the real Riftbound catalog (bundled snapshot -> daily live mirror)
+        try {
+            await window.RIFTZAY_CARDS_READY;
+        } catch (e) {
+            /* catalog stays empty; error surfaced below */
+        }
+        CARDS = window.RIFTZAY_CARDS || [];
+        CARD_BY_SLUG = window.RIFTZAY_CARD_BY_SLUG || {};
+        SETS = window.RIFTZAY_SETS || {};
+
+        if (!CARDS.length) {
+            showToast("The card catalog could not be loaded. Check your connection and refresh.", "error");
+        } else {
+            populateFilters();
+        }
         updateStats();
 
         // Restore session
