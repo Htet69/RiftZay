@@ -28,5 +28,17 @@ window.RIFTZAY_CONFIG = {
      * Update it whenever the market rate changes (display-only estimate). */
     MMK_PER_USD: 4400,
 
+    /* Multi-market store prices (from RiftCompare) are stored in each
+     * market's native currency; these rates convert them to USD for the
+     * "≈ MMK" display. Approximate, display-only. */
+    FX_TO_USD: {
+        AU: 0.66,   // Australian Dollar
+        NZ: 0.61,   // New Zealand Dollar
+        US: 1.0,    // US Dollar
+        UK: 1.27,   // British Pound
+        SG: 0.74,   // Singapore Dollar
+        CA: 0.73,   // Canadian Dollar
+    },
+
     APP_NAME: "RiftZay",
 };

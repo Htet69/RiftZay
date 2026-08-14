@@ -67,6 +67,7 @@ Every card that TCGplayer sells now shows its **real market price** (near-mint a
 
 - Market prices appear on card tiles, search suggestions, and a "Market Price Guide" on each card page, in USD with an approximate MMK equivalent (using `MMK_PER_USD` in `js/config.js`).
 - The price guide also breaks each card down **by condition** (Near Mint / Lightly Played / Moderately Played / Heavily Played / Damaged) for both finishes, pulled from TCGplayer's per-SKU listings — so buyers can compare what a well-worn copy actually costs.
+- A **"Store Prices Worldwide"** section shows the lowest in-stock offer across six markets (US, UK, Australia, New Zealand, Singapore, Canada), aggregated from local stores and eBay by [RiftCompare](https://riftcompare.com) — each in its native currency with an approximate MMK equivalent (rates in `FX_TO_USD` in `js/config.js`).
 - Sort by market price low→high / high→low in the browse view.
 - Cards TCGplayer doesn't list (some runes, tokens, judge promos) simply show no market price and fall back to community listings.
 

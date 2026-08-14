@@ -75,6 +75,29 @@
         return p && p.market != null ? p : null;
     }
 
+    /* Multi-market store price record for a card slug, or null.
+     * rc = {AU, NZ, US, UK, SG, CA} in native-currency cents. */
+    function marketCents(slug) {
+        const p = (window.RIFTZAY_PRICES || {})[slug];
+        return p && p.rc ? p.rc : null;
+    }
+
+    /* Native-currency price with an approximate USD + MMK equivalent,
+     * e.g. "$4.12 · ≈ MMK 18,128" for the US market. */
+    const MARKET_CURRENCIES = { AU: "AUD", NZ: "NZD", US: "USD", UK: "GBP", SG: "SGD", CA: "CAD" };
+    const MARKET_NAMES = { AU: "Australia", NZ: "New Zealand", US: "United States", UK: "United Kingdom", SG: "Singapore", CA: "Canada" };
+    const FX_TO_USD = CFG.FX_TO_USD || {};
+
+    function marketDualFromCents(code, cents) {
+        const usd = (Number(cents) / 100) * (FX_TO_USD[code] || 1);
+        const cur = MARKET_CURRENCIES[code] || "USD";
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: cur,
+            maximumFractionDigits: cents >= 10000 ? 0 : 2,
+        }).format(Number(cents) / 100) + ' <span class="usd-approx">≈ ' + fmt(Math.round(usd * MMK_PER_USD)) + "</span>";
+    }
+
     function listingsForCard(slug) {
         return allListings
             .filter(function (listing) {
@@ -605,6 +628,41 @@ case "offers":
         if (card.might !== null && card.might !== undefined) stats.push("Might " + card.might);
         const statsHTML = stats.length ? '<div class="card-stats">' + stats.join(" · ") + "</div>" : "";
 
+        /* Store prices across six markets, from RiftCompare's aggregated
+         * retailer feed (native-currency cents, lowest in-stock offer). */
+        const rc = marketCents(card.slug);
+        let marketRowsHTML = "";
+        if (rc) {
+            const codes = ["US", "UK", "AU", "NZ", "SG", "CA"];
+            const body = codes
+                .map(function (code) {
+                    if (rc[code] == null) return "";
+                    return (
+                        '<div class="pg-row pg-cond-row">' +
+                        '<span class="pg-finish">' + MARKET_NAMES[code] + "</span>" +
+                        '<span class="pg-market">' + marketDualFromCents(code, rc[code]) + "</span>" +
+                        '<span class="pg-low">' + (MARKET_CURRENCIES[code] === "USD" ? "from" : "lowest") + " store</span>" +
+                        "</div>"
+                    );
+                })
+                .join("");
+            if (body) {
+                const marketsUpdated = window.RIFTZAY_MARKETS_UPDATED
+                    ? new Date(window.RIFTZAY_MARKETS_UPDATED).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                    : "";
+                marketRowsHTML =
+                    '<div class="pg-conds">' +
+                    '<div class="pg-row pg-cond-head">' +
+                    '<span class="pg-finish">Store Prices Worldwide</span>' +
+                    '<span class="pg-market">Lowest Offer</span>' +
+                    '<span class="pg-low">Market</span>' +
+                    "</div>" +
+                    body +
+                    '<div class="pg-note">Aggregated from local stores &amp; eBay by RiftCompare · ' + marketsUpdated + "</div>" +
+                    "</div>";
+            }
+        }
+
         /* Real TCGplayer market prices (from the Open TCG API) */
         const market = marketPrice(card.slug);
         let priceGuide = "";
@@ -670,6 +728,7 @@ case "offers":
                 '<div class="price-guide-title">Market Price Guide <span class="guide-badge">TCGplayer · updated ' + updated + "</span></div>" +
                 rows.join("") +
                 (condRows ? '<div class="pg-conds">' + condRows + "</div>" : "") +
+                marketRowsHTML +
                 "</div>";
         }
 

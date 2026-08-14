@@ -19,7 +19,7 @@
     "use strict";
 
     var BASE = "https://tcgtracking.com/tcgapi/v1/89/sets/";
-    var LS_KEY = "riftzay_market_prices_v3";
+    var LS_KEY = "riftzay_market_prices_v4";
     var LS_AGE = 12 * 60 * 60 * 1000; // refresh market prices twice a day
 
     // All Riftbound sets that carry TCGplayer prices.
@@ -129,6 +129,18 @@
         });
     }
 
+    /* Multi-market store prices (RiftCompare, 6 markets in native-currency
+     * cents) come bundled in data/prices.js since their API has no CORS
+     * headers. Carry them onto every price record regardless of whether the
+     * TCGplayer figure came from the bundle or live. */
+    function applyMarketsFromBundle(out) {
+        var bundle = window.RIFTZAY_PRICES_BUNDLE || {};
+        Object.keys(out).forEach(function (slug) {
+            var rc = bundle[slug] && bundle[slug].rc;
+            if (rc) out[slug].rc = rc;
+        });
+    }
+
     function applyFromLive(bySet, skusBySet, updated) {
         var rev = reverseProductMap();
         var out = {};
@@ -138,6 +150,7 @@
                 applyConds(out, rev, aggregateConds(skusBySet[abbr]));
             }
         });
+        applyMarketsFromBundle(out);
         return { ts: Date.now(), updated: updated, prices: out };
     }
 
@@ -150,6 +163,7 @@
             if (cached && cached.prices &&
                 Date.now() - (cached.ts || 0) < LS_AGE) {
                 result = cached;
+                applyMarketsFromBundle(result.prices);
             }
 
             // 2) Live pricing from the Open TCG API (refreshed nightly)
@@ -195,6 +209,7 @@
             var prices = (result && result.prices) || {};
             window.RIFTZAY_PRICES = prices;
             window.RIFTZAY_PRICES_UPDATED = (result && result.updated) || null;
+            window.RIFTZAY_MARKETS_UPDATED = window.RIFTZAY_MARKETS_UPDATED || null;
             return prices;
         })();
     })();
