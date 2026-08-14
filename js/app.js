@@ -632,7 +632,7 @@
                 '<div class="market-info">' +
                 '<div class="market-name">' + escapeHTML(listing.seller_name) + (isBest ? ' <span class="best-tag">Lowest</span>' : "") + (isMine ? ' <span class="mine-tag">Yours</span>' : "") + "</div>" +
                 '<div class="market-region">' + escapeHTML(listing.condition) + " · " + escapeHTML(listing.variant) + " · Qty " + Number(listing.quantity) + "</div>" +
-                '<div class="listing-location">📍 ' + escapeHTML(listing.location) + "</div>" +
+                '<div class="listing-location">' + escapeHTML(listing.location) + "</div>" +
                 "</div>" +
                 '<div class="listing-buy">' +
                 '<div class="market-price">' + priceDual(listing.price_mmk) + "</div>" +
