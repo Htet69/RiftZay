@@ -267,7 +267,7 @@ function cardHTML(card) {
         const offers = listingsForCard(card.slug);
         const low = offers[0] || null;
         const market = marketPrice(card.slug);
-        const buyResult = market && window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market) : null;
+        const buyResult = market && window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market, card.slug) : null;
 
         const typeLabel = card.type ? cap(card.type) : "";
         const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
@@ -312,6 +312,7 @@ function cardHTML(card) {
             "</div>" +
             (typeLabel ? '<div class="card-type">' + typeLabel + champTag + "</div>" : "") +
             '<div class="market-strip">' + marketStrip + "</div>" +
+            (market ? '<div class="card-forecast">' + forecastChip(card.slug, true) + "</div>" : "") +
             communityStrip +
             '<div class="card-foot">' +
             '<span class="best-deal">' + (low ? '<strong>' + low.condition + '</strong> · ' + low.location : (market ? 'Market price from TCGplayer' : "Be the first seller")) + "</span>" +
@@ -734,7 +735,7 @@ case "offers":
                 });
             }
 
-            const buyResult = window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market) : null;
+            const buyResult = window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market, slug) : null;
             const buyChip = buyResult
                 ? '<span class="buy-chip chip-' + (buyResult.tier === "Buy Now" ? "now" : buyResult.tier === "Watch" ? "watch" : "wait") + '">' +
                   buyResult.tier + " · Score " + buyResult.score + "</span>"
@@ -746,6 +747,7 @@ case "offers":
                 rows.join("") +
                 (condRows ? '<div class="pg-conds">' + condRows + "</div>" : "") +
                 marketRowsHTML +
+                (window.RIFTZAY_PREDICT ? '<div class="pg-note">' + forecastChip(slug) + "</div>" : "") +
                 "</div>";
         }
 
@@ -840,6 +842,19 @@ case "offers":
         return "var(--text-muted)";
     }
 
+    /* Forecast chip: ▲ +12% / 30d · conf 78%. Hidden while collecting. */
+    function forecastChip(slug, inline) {
+        if (!window.RIFTZAY_PREDICT) return "";
+        const fc = window.RIFTZAY_PREDICT.forecast(slug);
+        if (!fc || !fc.ready) return "";
+        const cls = fc.direction === "up" ? "pred-up" : fc.direction === "down" ? "pred-down" : "pred-flat";
+        const arrow = fc.direction === "up" ? "▲" : fc.direction === "down" ? "▼" : "—";
+        const pct = fc.direction === "flat" ? "flat" : (fc.pct30 >= 0 ? "+" : "") + fc.pct30 + "%";
+        const title = "Price forecast: " + pct + " over 30 days · " + fc.confidence + "% confidence";
+        return '<span class="pred-chip ' + cls + (inline ? " pred-inline" : "") + '" title="' + escapeHTML(title) + '">' +
+            arrow + " " + pct + ' · ' + fc.confidence + '%</span>';
+    }
+
     function buysCardHTML(entry) {
         const card = entry.card;
         const result = entry.result;
@@ -868,6 +883,7 @@ case "offers":
             "</div>" +
             '<div class="set-name">' + card.set + ' · ' + card.setCode + " " + card.number + "</div>" +
             '<div class="buys-price">' + marketDual(rec.market) + (rec.finish === "Foil" ? ' <span class="foil-tag">Foil</span>' : "") + "</div>" +
+            '<div class="buys-forecast">' + forecastChip(card.slug) + "</div>" +
             '<div class="buys-reasons">' + result.reasons.map(function (r) {
                 return '<span class="buy-reason">' + escapeHTML(r) + "</span>";
             }).join("") + "</div>" +
@@ -913,7 +929,7 @@ case "offers":
         myWatchlist.forEach(function (slug) {
             const rec = (window.RIFTZAY_PRICES || {})[slug];
             if (!rec) return;
-            const result = window.RIFTZAY_BUYS.score(rec);
+            const result = window.RIFTZAY_BUYS.score(rec, slug);
             if (!result || result.tier !== "Buy Now") return;
             if (buysAlertShown[slug]) return;
             buysAlertShown[slug] = true;

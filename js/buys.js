@@ -8,18 +8,22 @@
  * plain-English reason for its rank.
  *
  * Signals (weights, re-normalized if a signal has no data):
- *   cross-market gap    30%   cheapest store price vs TCGplayer market
- *   condition discount  25%   played copies (LP/MP/HP/DMG) vs Near Mint
- *   foil value          20%   foil premium vs the Normal finish
- *   liquidity           15%   how many markets/conditions have data
- *   market tightness    10%   TCGplayer low vs market (real demand)
+ *   cross-market gap    20%   cheapest store price vs TCGplayer market
+ *   condition discount  16%   played copies (LP/MP/HP/DMG) vs Near Mint
+ *   foil value          12%   foil premium vs the Normal finish
+ *   liquidity            8%   how many markets/conditions have data
+ *   market tightness     6%   TCGplayer low vs market (real demand)
+ *   savings size        18%   real dollars that can be saved today
+ *   price forecast      20%   trend + momentum projection (see js/predict.js)
  *
  * Tiers:  Buy Now >= 70   |   Watch 40-69   |   Wait < 40
  *
- * A note on "AI": this is honest explainable scoring, not a machine-learned
- * forecast. The sources expose only current prices (no historical series),
- * so nothing can truthfully "predict the future" - instead the engine finds
- * cards that are cheap relative to their own reference points today.
+ * A note on "AI": the price-forecast signal is honest statistical
+ * forecasting (linear trend + momentum on the daily snapshots RiftZay
+ * collects itself), not a black-box ML model. Every other signal is fully
+ * explainable scoring of current data. Nothing guarantees the future -
+ * the forecast has a confidence score and only turns on after a week of
+ * history has been collected.
  */
 
 (function () {
@@ -69,9 +73,9 @@
         return best == null ? null : best;
     }
 
-    /* Core scoring. record = window.RIFTZAY_PRICES[slug]. Returns
-     * {score, tier, signals, reasons[]}. Pure - no DOM, no IO. */
-    function score(record) {
+    /* Core scoring. record = window.RIFTZAY_PRICES[slug], slug = card slug
+     * (used to look up the price forecast). Pure - no DOM, no IO. */
+    function score(record, slug) {
         if (!record) return null;
 
         var market = record.market;
@@ -138,13 +142,34 @@
         var saveSize = clamp((savedUSD / 5) * 100, 0, 100); // $5+ saved = perfect
         var saveData = savedUSD >= 0.25;
 
+        /* 7) Price forecast: trend + momentum from the collected history.
+         * Upward momentum = buy before it rises; downward = wait it out. */
+        var fc = null;
+        if (window.RIFTZAY_PREDICT) {
+            fc = window.RIFTZAY_PREDICT.forecast(slug);
+        }
+        var forecastValue = 50, forecastData = false;
+        if (fc && fc.ready) {
+            if (fc.direction === "up") {
+                forecastValue = clamp(50 + (fc.pct30 / 0.25) * 50 * (fc.confidence / 100), 0, 100);
+                forecastData = fc.confidence >= 45;
+            } else if (fc.direction === "down") {
+                forecastValue = clamp(50 - (Math.abs(fc.pct30) / 0.25) * 50 * (fc.confidence / 100), 0, 100);
+                forecastData = fc.confidence >= 45;
+            } else {
+                forecastValue = 50;
+                forecastData = fc.confidence >= 45;
+            }
+        }
+
         var signals = [
-            Signal("cross-market gap", 0.25, cross, crossData),
-            Signal("condition discount", 0.20, cond, condData),
-            Signal("foil value", 0.15, foil, foilData),
-            Signal("liquidity", 0.10, liq, liqData),
-            Signal("market tightness", 0.08, tight, tightData),
-            Signal("savings size", 0.22, saveSize, saveData),
+            Signal("cross-market gap", 0.20, cross, crossData),
+            Signal("condition discount", 0.16, cond, condData),
+            Signal("foil value", 0.12, foil, foilData),
+            Signal("liquidity", 0.08, liq, liqData),
+            Signal("market tightness", 0.06, tight, tightData),
+            Signal("savings size", 0.18, saveSize, saveData),
+            Signal("price forecast", 0.20, forecastValue, forecastData),
         ];
 
         var wTotal = 0, scoreSum = 0;
@@ -155,12 +180,12 @@
 
         var tier = final >= 70 ? "Buy Now" : (final >= 40 ? "Watch" : "Wait");
 
-        var reasons = buildReasons(signals, record, storeUSD, played);
+        var reasons = buildReasons(signals, record, storeUSD, played, fc);
 
-        return { score: final, tier: tier, signals: signals, reasons: reasons };
+        return { score: final, tier: tier, signals: signals, reasons: reasons, forecast: fc };
     }
 
-    function buildReasons(signals, record, storeUSD, played) {
+    function buildReasons(signals, record, storeUSD, played, fc) {
         var reasons = [];
         var byName = {};
         signals.forEach(function (s) { byName[s.name] = s; });
@@ -192,6 +217,17 @@
         if (byName["market tightness"].hasData && byName["market tightness"].value >= 70) {
             reasons.push("Tight market - low is close to the market price");
         }
+        if (fc && fc.ready && byName["price forecast"].hasData) {
+            if (fc.direction === "up") {
+                reasons.push("Forecast: +" + fc.pct30 + "% in 30 days (trend + momentum, " + fc.confidence + "% conf)");
+            } else if (fc.direction === "down") {
+                reasons.push("Forecast: -" + Math.abs(fc.pct30) + "% in 30 days - price likely still falling");
+            } else {
+                reasons.push("Forecast: flat over 30 days (" + fc.confidence + "% conf)");
+            }
+        } else if (fc && !fc.ready) {
+            reasons.push("Collecting price history - forecast arrives after " + window.RIFTZAY_PREDICT.MIN_DAYS + " days");
+        }
         if (!reasons.length && record.market > 0) {
             reasons.push("Average value at this price - no standout discount");
         }
@@ -209,7 +245,7 @@
         (cards || []).forEach(function (card) {
             var record = prices && prices[card.slug];
             if (!record || !(record.market > 0)) return;
-            var result = score(record);
+            var result = score(record, card.slug);
             if (!result) return;
             out.push({ slug: card.slug, card: card, record: record, result: result });
         });
