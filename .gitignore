@@ -1,0 +1,14 @@
+# Research / scratch files (not part of the app)
+cards.json
+github_search.json
+riftbound_*.html
+riftbound_*.json
+riftbound_seed.ts
+riftbound_repo_readme.md
+scryfall_probe.json
+tcg_search.json
+tcgplayer2.json
+
+# Editor / tooling
+.vscode/
+.kiro/

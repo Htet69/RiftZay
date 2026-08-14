@@ -21,6 +21,7 @@
         users: "riftzay_users",
         session: "riftzay_session",
         watchlist: "riftzay_watchlist",
+        listings: "riftzay_listings",
     };
 
     function readLS(key, fallback) {
@@ -194,6 +195,98 @@
             map[userId] = list;
             writeLS(LS_KEYS.watchlist, map);
             return added;
+        },
+
+        /* ---------- COMMUNITY LISTINGS ---------- */
+
+        getListings: async function (cardSlug) {
+            if (HAS_SUPABASE) {
+                const { data, error } = await supabase
+                    .from("listings")
+                    .select("*")
+                    .eq("card_slug", cardSlug)
+                    .gt("quantity", 0)
+                    .order("price_mmk", { ascending: true });
+                if (error) throw new Error(error.message);
+                return data || [];
+            }
+            return readLS(LS_KEYS.listings, [])
+                .filter(function (listing) {
+                    return listing.card_slug === cardSlug && listing.quantity > 0;
+                })
+                .sort(function (a, b) { return a.price_mmk - b.price_mmk; });
+        },
+
+        getAllListings: async function () {
+            if (HAS_SUPABASE) {
+                const { data, error } = await supabase
+                    .from("listings")
+                    .select("*")
+                    .gt("quantity", 0)
+                    .order("created_at", { ascending: false });
+                if (error) throw new Error(error.message);
+                return data || [];
+            }
+            return readLS(LS_KEYS.listings, []).filter(function (listing) {
+                return listing.quantity > 0;
+            });
+        },
+
+        createListing: async function (user, values) {
+            const listing = {
+                card_slug: values.card_slug,
+                seller_id: user.id,
+                seller_name: user.username,
+                condition: values.condition,
+                variant: values.variant,
+                price_mmk: Number(values.price_mmk),
+                quantity: Number(values.quantity),
+                location: values.location,
+                contact: values.contact,
+            };
+
+            if (HAS_SUPABASE) {
+                const { data, error } = await supabase
+                    .from("listings")
+                    .insert([listing])
+                    .select()
+                    .single();
+                if (error) throw new Error(error.message);
+                return data;
+            }
+
+            listing.id = uid();
+            listing.created_at = nowISO();
+            const listings = readLS(LS_KEYS.listings, []);
+            listings.push(listing);
+            writeLS(LS_KEYS.listings, listings);
+            return listing;
+        },
+
+        deleteListing: async function (userId, listingId) {
+            if (HAS_SUPABASE) {
+                const { error } = await supabase
+                    .from("listings")
+                    .delete()
+                    .eq("id", listingId)
+                    .eq("seller_id", userId);
+                if (error) throw new Error(error.message);
+                return;
+            }
+
+            const listings = readLS(LS_KEYS.listings, []);
+            writeLS(LS_KEYS.listings, listings.filter(function (listing) {
+                return !(listing.id === listingId && listing.seller_id === userId);
+            }));
+        },
+
+        subscribeListings: function (onChange) {
+            if (!HAS_SUPABASE) return function () {};
+            const channel = supabase
+                .channel("riftzay-listings")
+                .on("postgres_changes", { event: "*", schema: "public", table: "listings" }, onChange)
+                .subscribe();
+            return function () { supabase.removeChannel(channel); };
         },
     };
 
