@@ -150,6 +150,8 @@
         } else if (name === "home") {
             renderCards($("#search-input").value, $("#sort-select").value);
         }
+
+        if (window.RIFTZAY_REVEAL) window.RIFTZAY_REVEAL();
     }
 
     /* ---------- Auth UI ---------- */
@@ -159,7 +161,7 @@
         const chip = $("#user-chip");
         if (currentUser) {
             chip.hidden = false;
-            chip.textContent = "👤 " + currentUser.username;
+            chip.textContent = currentUser.username;
             btn.textContent = "Sign Out";
         } else {
             chip.hidden = true;
@@ -415,6 +417,11 @@
         title.textContent = q ? "Results for \u201c" + query.trim() + "\u201d" : "All Cards";
 
         renderPagination(filtered.length, totalPages);
+
+        /* Re-arm scroll-reveal for freshly rendered cards */
+        if (window.RIFTZAY_REVEAL) {
+            window.RIFTZAY_REVEAL();
+        }
     }
 
     function renderPagination(total, totalPages) {
@@ -872,7 +879,7 @@
             (meta.games != null ? meta.games + " games, " : "") +
             (meta.decks != null ? meta.decks + " decks" : "");
         return '<span class="pred-chip meta-chip ' + cls + (cls === "meta-ok" ? " pred-flat" : "") + '" title="' + escapeHTML(title) + '">' +
-            "🏆 " + meta.win + "% win</span>";
+            meta.win + "% win</span>";
     }
 
     /* Mini trend chart + "why buy/wait" explanation. Renders an SVG line of
@@ -904,7 +911,7 @@
                 why = "The price has been <strong>stable</strong> over the collected window. With no clear move either way, the decision comes down to today's value signals.";
             }
             if (fc.meta && fc.meta.signal >= 0.3) {
-                why += ' <span class="trend-meta">🏆 Hot in tournaments — ' + fc.meta.win + "% win rate" +
+                why += ' <span class="trend-meta">Hot in tournaments — ' + fc.meta.win + "% win rate" +
                     (fc.meta.play != null ? ", " + fc.meta.play + "% of decks" : "") + " — tournament demand tends to push prices up.</span>";
             }
             why += ' <span class="trend-conf">(confidence ' + fc.confidence + "%)</span>";
@@ -1150,7 +1157,7 @@
             buysAlertShown[slug] = true;
             const card = CARD_BY_SLUG[slug];
             const label = (card ? card.name : slug) + " is a Buy Now pick (score " + result.score + ")";
-            showToast("🔔 " + label, "success");
+            showToast(label, "success");
             if (window.Notification && Notification.permission === "granted") {
                 try {
                     new Notification("RiftZay Buy Alert", { body: label });
@@ -1313,21 +1320,29 @@
 
     /* Scroll-reveal with IntersectionObserver */
     function initScrollReveal() {
-        const els = document.querySelectorAll(".reveal");
-        if (!els.length) return;
-        if (!("IntersectionObserver" in window)) {
-            els.forEach(function (el) { el.classList.add("revealed"); });
-            return;
-        }
-        const obs = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add("revealed");
-                    obs.unobserve(entry.target);
-                }
+        let obs = null;
+        function scan() {
+            const els = document.querySelectorAll(".reveal");
+            if (!els.length) return;
+            if (!("IntersectionObserver" in window)) {
+                els.forEach(function (el) { el.classList.add("revealed"); });
+                return;
+            }
+            if (obs) obs.disconnect();
+            obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("revealed");
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+            els.forEach(function (el) {
+                if (!el.classList.contains("revealed")) obs.observe(el);
             });
-        }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
-        els.forEach(function (el) { obs.observe(el); });
+        }
+        window.RIFTZAY_REVEAL = scan;
+        scan();
     }
 
     /* Animated stat counters (Apple-style count up) */
@@ -1517,6 +1532,15 @@
         renderTopPick();
         renderTrending();
         initScrollReveal();
+
+        // Apple-style header: adds subtle elevation + border after scrolling
+        function onHeaderScroll() {
+            const header = document.querySelector(".site-header");
+            if (!header) return;
+            header.classList.toggle("scrolled", window.scrollY > 8);
+        }
+        window.addEventListener("scroll", onHeaderScroll, { passive: true });
+        onHeaderScroll();
 
         // Nav
         document.querySelectorAll("[data-nav]").forEach(function (el) {

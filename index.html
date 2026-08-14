@@ -218,8 +218,8 @@
 
         <!-- ============ TOP PICK (Buy Now leader, tournament + forecast blended) ============ -->
         <div class="container">
-            <div class="top-pick" id="top-pick" hidden>
-                <div class="top-pick-badge">🏆 Today's Top Buy Now Pick</div>
+            <div class="top-pick reveal" id="top-pick" hidden>
+                <div class="top-pick-badge">Today's Top Buy Now Pick</div>
                 <div class="top-pick-body">
                     <div class="buys-score" id="top-pick-ring-wrap">
                         <svg viewBox="0 0 36 36" class="buys-ring">
@@ -240,9 +240,9 @@
         </div>
 
         <!-- ============ TRENDING IN TOURNAMENTS (riftdecks.com metagame) ============ -->
-        <section class="container trending-section" id="trending-section" hidden>
+        <section class="container trending-section reveal" id="trending-section" hidden>
             <div class="section-header">
-                <h2 class="section-title">🏆 Trending in Tournaments</h2>
+                <h2 class="section-title">Trending in Tournaments</h2>
                 <p class="section-sub">Cards seeing the most play and best win rates in competitive Riftbound right now.
                 </p>
             </div>
@@ -250,7 +250,7 @@
         </section>
 
         <div class="container browse-body">
-            <div class="results-head">
+            <div class="results-head reveal">
                 <h2 id="results-title">All Cards</h2>
                 <div class="results-meta">
                     <span id="results-count"></span>
@@ -267,7 +267,7 @@
             </div>
 
             <!-- TCGplayer-style filters (options are built from the live card data) -->
-            <div class="filter-bar">
+            <div class="filter-bar reveal">
                 <select id="filter-set" aria-label="Filter by set">
                     <option value="">All Sets</option>
                 </select>
