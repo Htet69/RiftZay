@@ -1031,6 +1031,56 @@ case "offers":
         );
     }
 
+    function trendingCardHTML(entry) {
+        const card = entry.card;
+        const meta = entry.meta;
+        return (
+            '<a class="trend-pick" data-detail="' + card.slug + '">' +
+            '<div class="trend-pick-thumb">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<div class="tcg-thumb-fallback"></div>' +
+            "</div>" +
+            '<div class="trend-pick-name">' + escapeHTML(card.name) + "</div>" +
+            '<div class="trend-pick-set">' + card.set + "</div>" +
+            '<div class="trend-pick-stats">' +
+            '<span class="trend-pick-win">' + meta.win + "% win</span>" +
+            (meta.play != null ? '<span class="trend-pick-play">' + meta.play + "% of decks</span>" : "") +
+            "</div>" +
+            "</a>"
+        );
+    }
+
+    /* Homepage strip: cards with the most tournament play + best win rates,
+     * from the riftdecks.com metagame snapshot (data/meta.js). Populated
+     * immediately (no price-history warmup needed, unlike price forecasts). */
+    function renderTrending() {
+        const section = $("#trending-section");
+        const row = $("#trending-row");
+        if (!section || !row) return;
+
+        if (!window.RIFTZAY_PREDICT) {
+            section.hidden = true;
+            return;
+        }
+
+        const entries = [];
+        CARDS.forEach(function (card) {
+            const meta = window.RIFTZAY_PREDICT.meta(card.slug);
+            if (meta && meta.win != null) entries.push({ card: card, meta: meta });
+        });
+        entries.sort(function (a, b) {
+            return (b.meta.play || 0) - (a.meta.play || 0) || (b.meta.win || 0) - (a.meta.win || 0);
+        });
+        const top = entries.slice(0, 10);
+
+        if (!top.length) {
+            section.hidden = true;
+            return;
+        }
+        row.innerHTML = top.map(trendingCardHTML).join("");
+        section.hidden = false;
+    }
+
     /* Homepage banner: the single best Buy Now pick right now (falls back to
      * the top-ranked card of any tier if nothing clears the Buy Now bar). */
     function renderTopPick() {
@@ -1345,6 +1395,7 @@ case "offers":
         // Initial render
         renderCards("", "name");
         renderTopPick();
+        renderTrending();
 
         // Nav
         document.querySelectorAll("[data-nav]").forEach(function (el) {
