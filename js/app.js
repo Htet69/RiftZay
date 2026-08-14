@@ -128,7 +128,7 @@ function lowestListing(card) {
     /* ---------- Views / navigation ---------- */
 
     function showView(name, slug) {
-        ["home", "product", "watchlist", "listings"].forEach(function (v) {
+        ["home", "product", "watchlist", "listings", "buys"].forEach(function (v) {
             $("#view-" + v).hidden = v !== name;
         });
         $("#view-product").hidden = name !== "product";
@@ -139,8 +139,10 @@ function lowestListing(card) {
 
         if (name === "product" && slug) {
             openProduct(slug);
-        } else if (name === "watchlist") {
-            renderWatchlist();
+        } else if (name === "buys") {
+            requestNotificationPermission();
+            renderBuys();
+        } else if (name === "watchlist") {            renderWatchlist();
         } else if (name === "listings") {
             renderMyListings();
         } else if (name === "home") {
@@ -265,6 +267,7 @@ function cardHTML(card) {
         const offers = listingsForCard(card.slug);
         const low = offers[0] || null;
         const market = marketPrice(card.slug);
+        const buyResult = market && window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market) : null;
 
         const typeLabel = card.type ? cap(card.type) : "";
         const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
@@ -283,6 +286,11 @@ function cardHTML(card) {
               "</div>"
             : "";
 
+        const buyChip = buyResult
+            ? '<span class="buy-chip chip-' + (buyResult.tier === "Buy Now" ? "now" : buyResult.tier === "Watch" ? "watch" : "wait") + '" title="' +
+              escapeHTML(buyResult.reasons.join(" · ")) + '">' + buyResult.tier + " " + buyResult.score + "</span>"
+            : "";
+
         return (
             '<article class="tcg-card">' +
             '<button class="watch-btn' + (watched ? " watched" : "") + '" data-watch="' + card.slug + '" title="' +
@@ -297,7 +305,10 @@ function cardHTML(card) {
             '<h3 data-detail="' + card.slug + '">' + escapeHTML(card.name) + "</h3>" +
             '<div class="set-name">' + card.set + ' · ' + card.setCode + " " + card.number + "</div>" +
             "</div>" +
+            '<div class="card-header-side">' +
             '<span class="rarity rarity-' + card.rarity + '">' + cap(card.rarity) + "</span>" +
+            buyChip +
+            "</div>" +
             "</div>" +
             (typeLabel ? '<div class="card-type">' + typeLabel + champTag + "</div>" : "") +
             '<div class="market-strip">' + marketStrip + "</div>" +
@@ -723,9 +734,15 @@ case "offers":
                 });
             }
 
+            const buyResult = window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market) : null;
+            const buyChip = buyResult
+                ? '<span class="buy-chip chip-' + (buyResult.tier === "Buy Now" ? "now" : buyResult.tier === "Watch" ? "watch" : "wait") + '">' +
+                  buyResult.tier + " · Score " + buyResult.score + "</span>"
+                : "";
+
             priceGuide =
                 '<div class="price-guide">' +
-                '<div class="price-guide-title">Market Price Guide <span class="guide-badge">TCGplayer · updated ' + updated + "</span></div>" +
+                '<div class="price-guide-title">Market Price Guide <span class="guide-badge">TCGplayer · updated ' + updated + "</span>" + buyChip + "</div>" +
                 rows.join("") +
                 (condRows ? '<div class="pg-conds">' + condRows + "</div>" : "") +
                 marketRowsHTML +
@@ -812,6 +829,109 @@ case "offers":
         });
         grid.innerHTML = watched.map(function (c) { return cardHTML(c); }).join("");
         empty.hidden = watched.length !== 0;
+    }
+
+    /* ---------- Buy Now (smart picks) ---------- */
+
+    /* Buy score ring colors by tier */
+    function tierColor(tier) {
+        if (tier === "Buy Now") return "var(--green)";
+        if (tier === "Watch") return "var(--gold)";
+        return "var(--text-muted)";
+    }
+
+    function buysCardHTML(entry) {
+        const card = entry.card;
+        const result = entry.result;
+        const rec = entry.record;
+        const watched = currentUser && myWatchlist.indexOf(card.slug) !== -1;
+        const tier = result.tier;
+        const color = tierColor(tier);
+
+        return (
+            '<div class="buys-row">' +
+            '<div class="buys-score" style="--score-color:' + color + '">' +
+            '<svg viewBox="0 0 36 36" class="buys-ring">' +
+            '<circle cx="18" cy="18" r="15.9" class="buys-ring-bg" />' +
+            '<circle cx="18" cy="18" r="15.9" class="buys-ring-fg" stroke-dasharray="100" stroke-dashoffset="' + (100 - result.score) + '" />' +
+            "</svg>" +
+            '<span class="buys-score-num">' + result.score + "</span>" +
+            "</div>" +
+            '<div class="buys-thumb">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<div class="tcg-thumb-fallback"></div>' +
+            "</div>" +
+            '<div class="buys-info">' +
+            '<div class="buys-title">' +
+            '<a href="#" data-detail="' + card.slug + '">' + escapeHTML(card.name) + "</a>" +
+            '<span class="rarity rarity-' + card.rarity + '">' + cap(card.rarity) + "</span>" +
+            "</div>" +
+            '<div class="set-name">' + card.set + ' · ' + card.setCode + " " + card.number + "</div>" +
+            '<div class="buys-price">' + marketDual(rec.market) + (rec.finish === "Foil" ? ' <span class="foil-tag">Foil</span>' : "") + "</div>" +
+            '<div class="buys-reasons">' + result.reasons.map(function (r) {
+                return '<span class="buy-reason">' + escapeHTML(r) + "</span>";
+            }).join("") + "</div>" +
+            "</div>" +
+            '<div class="buys-actions">' +
+            '<span class="buys-tier tier-' + (tier === "Buy Now" ? "now" : tier === "Watch" ? "watch" : "wait") + '">' + tier + "</span>" +
+            '<button class="watch-btn' + (watched ? " watched" : "") + '" data-watch="' + card.slug + '" title="' +
+            (watched ? "Remove from watchlist" : "Add to watchlist") + '">' +
+            (watched ? "★" : "☆") + " Watchlist</button>" +
+            '<button class="btn btn-outline btn-sm" data-detail="' + card.slug + '">View →</button>' +
+            "</div>" +
+            "</div>"
+        );
+    }
+
+    function renderBuys() {
+        const list = $("#buys-list");
+        const empty = $("#buys-empty");
+        if (!list) return;
+
+        const ranked = window.RIFTZAY_BUYS
+            ? window.RIFTZAY_BUYS.rankAll(CARDS, window.RIFTZAY_PRICES || {})
+            : [];
+
+        const tierFilter = $("#buys-tier").value;
+        const limit = Number($("#buys-limit").value) || 24;
+
+        const filtered = ranked.filter(function (e) {
+            return tierFilter === "all" || e.result.tier === tierFilter;
+        });
+        const shown = filtered.slice(0, limit);
+
+        list.innerHTML = shown.map(buysCardHTML).join("");
+        empty.hidden = shown.length !== 0;
+    }
+
+    /* Watch a signed-in user's list for Buy Now cards and surface alerts
+     * (toast + browser notification). Runs after prices + watchlist load. */
+    let buysAlertShown = {};
+
+    function checkBuyAlerts() {
+        if (!currentUser || !myWatchlist.length || !window.RIFTZAY_BUYS) return;
+        myWatchlist.forEach(function (slug) {
+            const rec = (window.RIFTZAY_PRICES || {})[slug];
+            if (!rec) return;
+            const result = window.RIFTZAY_BUYS.score(rec);
+            if (!result || result.tier !== "Buy Now") return;
+            if (buysAlertShown[slug]) return;
+            buysAlertShown[slug] = true;
+            const card = CARD_BY_SLUG[slug];
+            const label = (card ? card.name : slug) + " is a Buy Now pick (score " + result.score + ")";
+            showToast("🔔 " + label, "success");
+            if (window.Notification && Notification.permission === "granted") {
+                try {
+                    new Notification("RiftZay Buy Alert", { body: label });
+                } catch (e) { /* notifications not available */ }
+            }
+        });
+    }
+
+    function requestNotificationPermission() {
+        if (window.Notification && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
     }
 
     /* ---------- Seller listings ---------- */
@@ -1040,6 +1160,7 @@ case "offers":
         }
         updateAuthUI();
         updateStats();
+        checkBuyAlerts();
 
         // Initial render
         renderCards("", "name");
@@ -1098,6 +1219,10 @@ case "offers":
             currentPage = 1;
             renderCards($("#search-input").value, this.value);
         });
+
+        // Buy Now filters
+        $("#buys-tier").addEventListener("change", renderBuys);
+        $("#buys-limit").addEventListener("change", renderBuys);
 
         // Filters
         $("#filter-set").addEventListener("change", function () {

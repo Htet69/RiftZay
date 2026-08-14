@@ -50,6 +50,7 @@
 
             <nav class="main-nav">
                 <a href="#" data-nav="home" class="active">Browse</a>
+                <a href="#" data-nav="buys">Buy Now</a>
                 <a href="#" data-nav="watchlist">Watchlist</a>
                 <a href="#" data-nav="listings">My Listings</a>
             </nav>
@@ -218,6 +219,41 @@
         </div>
     </section>
 
+<!-- ============ BUY NOW VIEW (smart picks) ============ -->
+    <section class="view" id="view-buys" hidden>
+        <div class="container browse-body">
+            <div class="results-head buys-head">
+                <div>
+                    <h2 class="section-title">Buy Now <span class="buys-badge">AI Scored</span></h2>
+                    <p class="section-sub">Cards ranked by how much value is on the table right now — scored against
+                        TCGplayer market, per-condition prices, and store prices in six markets.</p>
+                </div>
+            </div>
+            <div class="buys-bar">
+                <label class="buys-filter">
+                    <span>Tier</span>
+                    <select id="buys-tier" aria-label="Filter by buy tier">
+                        <option value="all">All tiers</option>
+                        <option value="Buy Now">Buy Now</option>
+                        <option value="Watch">Watch</option>
+                        <option value="Wait">Wait</option>
+                    </select>
+                </label>
+                <label class="buys-filter">
+                    <span>Show</span>
+                    <select id="buys-limit" aria-label="How many picks to show">
+                        <option value="12">Top 12</option>
+                        <option value="24" selected>Top 24</option>
+                        <option value="50">Top 50</option>
+                    </select>
+                </label>
+                <span class="buys-hint">Scores refresh with market prices (twice a day).</span>
+            </div>
+            <div class="buys-list" id="buys-list"></div>
+            <p class="empty-state" id="buys-empty" hidden>No scored cards yet. Market prices are still loading.</p>
+        </div>
+    </section>
+
     <!-- ============ SELLER LISTINGS VIEW ============ -->
     <section class="view" id="view-listings" hidden>
         <div class="container browse-body">
@@ -277,6 +313,8 @@
     <script src="data/prices.js"></script>
     <!-- Loader: fetches live pricing from the Open TCG API, joins to cards -->
     <script src="js/prices.js"></script>
+    <!-- Smart Buy-Now scoring engine (transparent, rule-based) -->
+    <script src="js/buys.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>

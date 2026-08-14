@@ -1897,3 +1897,297 @@ em {
         max-width: 130px;
     }
 }
+
+/* ================= BUY NOW (smart picks) ================= */
+
+.buys-badge {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid rgba(76, 201, 143, 0.3);
+    padding: 2px 9px;
+    border-radius: 999px;
+    vertical-align: middle;
+}
+
+.buys-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.buys-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.buys-filter span {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+}
+
+.buys-filter select {
+    background: var(--bg-soft);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+}
+
+.buys-hint {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+    align-self: center;
+}
+
+.buys-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.buys-row {
+    display: grid;
+    grid-template-columns: 64px 84px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.buys-row:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+}
+
+.buys-score {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.buys-ring {
+    width: 60px;
+    height: 60px;
+    transform: rotate(-90deg);
+}
+
+.buys-ring circle {
+    fill: none;
+    stroke-width: 3;
+}
+
+.buys-ring-bg {
+    stroke: var(--bg-soft);
+}
+
+.buys-ring-fg {
+    stroke: var(--score-color, var(--green));
+    stroke-linecap: round;
+}
+
+.buys-score-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.buys-thumb {
+    position: relative;
+    width: 84px;
+    height: 118px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-soft);
+}
+
+.buys-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.buys-info {
+    min-width: 0;
+}
+
+.buys-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.buys-title a {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.buys-title a:hover {
+    color: var(--accent);
+}
+
+.buys-price {
+    margin: 6px 0;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green);
+}
+
+.foil-tag {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--violet);
+    border: 1px solid rgba(167, 139, 250, 0.35);
+    padding: 1px 7px;
+    border-radius: 999px;
+}
+
+.buys-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.buy-reason {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 999px;
+}
+
+.buys-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.buys-tier {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.tier-now {
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid rgba(76, 201, 143, 0.35);
+}
+
+.tier-watch {
+    color: var(--gold);
+    background: rgba(240, 181, 74, 0.12);
+    border: 1px solid rgba(240, 181, 74, 0.35);
+}
+
+.tier-wait {
+    color: var(--text-muted);
+    background: var(--bg-soft);
+    border: 1px solid var(--border-strong);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12.5px;
+}
+
+/* Buy chip on card tiles + product page */
+.card-header-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.buy-chip {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.chip-now {
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid rgba(76, 201, 143, 0.35);
+}
+
+.chip-watch {
+    color: var(--gold);
+    background: rgba(240, 181, 74, 0.12);
+    border: 1px solid rgba(240, 181, 74, 0.35);
+}
+
+.chip-wait {
+    color: var(--text-muted);
+    background: var(--bg-soft);
+    border: 1px solid var(--border-strong);
+}
+
+@media (max-width: 720px) {
+    .buys-row {
+        grid-template-columns: 56px 64px 1fr;
+    }
+
+    .buys-actions {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .buys-thumb {
+        width: 64px;
+        height: 90px;
+    }
+
+    .buys-hint {
+        margin-left: 0;
+        width: 100%;
+    }
+}
