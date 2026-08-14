@@ -1031,6 +1031,38 @@ case "offers":
         );
     }
 
+    /* Homepage banner: the single best Buy Now pick right now (falls back to
+     * the top-ranked card of any tier if nothing clears the Buy Now bar). */
+    function renderTopPick() {
+        const box = $("#top-pick");
+        if (!box) return;
+
+        const ranked = window.RIFTZAY_BUYS
+            ? window.RIFTZAY_BUYS.rankAll(CARDS, window.RIFTZAY_PRICES || {})
+            : [];
+        const top = ranked.find(function (e) { return e.result.tier === "Buy Now"; }) || ranked[0];
+        if (!top) {
+            box.hidden = true;
+            return;
+        }
+
+        const card = top.card;
+        const result = top.result;
+        const ring = $("#top-pick-ring");
+        ring.style.setProperty("--score-color", tierColor(result.tier));
+        ring.setAttribute("stroke-dasharray", "100");
+        ring.setAttribute("stroke-dashoffset", String(100 - result.score));
+        $("#top-pick-score").textContent = result.score;
+        $("#top-pick-thumb").src = card.art;
+        $("#top-pick-thumb").alt = card.name;
+        const nameEl = $("#top-pick-name");
+        nameEl.textContent = card.name;
+        nameEl.setAttribute("data-detail", card.slug);
+        $("#top-pick-set").textContent = card.set + " · " + card.setCode + " " + card.number;
+        $("#top-pick-reason").textContent = result.reasons[0] || "Solid value at today's price.";
+        box.hidden = false;
+    }
+
     function renderBuys() {
         const list = $("#buys-list");
         const empty = $("#buys-empty");
@@ -1312,6 +1344,7 @@ case "offers":
 
         // Initial render
         renderCards("", "name");
+        renderTopPick();
 
         // Nav
         document.querySelectorAll("[data-nav]").forEach(function (el) {

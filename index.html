@@ -180,6 +180,29 @@
             </div>
         </div>
 
+        <!-- ============ TOP PICK (Buy Now leader, tournament + forecast blended) ============ -->
+        <div class="container">
+            <div class="top-pick" id="top-pick" hidden>
+                <div class="top-pick-badge">🏆 Today's Top Buy Now Pick</div>
+                <div class="top-pick-body">
+                    <div class="buys-score" id="top-pick-ring-wrap">
+                        <svg viewBox="0 0 36 36" class="buys-ring">
+                            <circle cx="18" cy="18" r="15.9" class="buys-ring-bg" />
+                            <circle cx="18" cy="18" r="15.9" class="buys-ring-fg" id="top-pick-ring" />
+                        </svg>
+                        <span class="buys-score-num" id="top-pick-score"></span>
+                    </div>
+                    <div class="top-pick-thumb"><img id="top-pick-thumb" alt="" loading="lazy" /></div>
+                    <div class="top-pick-info">
+                        <a class="top-pick-name" id="top-pick-name" href="#" data-detail=""></a>
+                        <div class="top-pick-set" id="top-pick-set"></div>
+                        <div class="top-pick-reason" id="top-pick-reason"></div>
+                    </div>
+                    <a class="btn btn-primary btn-sm top-pick-cta" href="#" data-nav="buys">See all picks →</a>
+                </div>
+            </div>
+        </div>
+
         <div class="container browse-body">
             <div class="results-head">
                 <h2 id="results-title">All Cards</h2>

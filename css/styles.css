@@ -528,6 +528,92 @@ em {
     font-weight: 500;
 }
 
+/* ================= TOP PICK BANNER ================= */
+.top-pick {
+    margin: 28px 0 -6px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, var(--green-bg), var(--bg-card));
+    border: 1px solid rgba(76, 201, 143, 0.35);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.top-pick[hidden] {
+    display: none;
+}
+
+.top-pick-badge {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--green);
+    margin-bottom: 12px;
+}
+
+.top-pick-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.top-pick-thumb {
+    width: 64px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-soft);
+    flex-shrink: 0;
+}
+
+.top-pick-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.top-pick-info {
+    min-width: 0;
+    flex: 1 1 220px;
+}
+
+.top-pick-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.top-pick-name:hover {
+    color: var(--accent);
+}
+
+.top-pick-set {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.top-pick-reason {
+    font-size: 13px;
+    color: var(--text);
+    margin-top: 6px;
+}
+
+.top-pick-cta {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .top-pick-body {
+        gap: 12px;
+    }
+}
+
 /* ================= VIEWS ================= */
 .view {
     display: block;
