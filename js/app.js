@@ -106,7 +106,7 @@
             .sort(function (a, b) { return Number(a.price_mmk) - Number(b.price_mmk); });
     }
 
-function lowestListing(card) {
+    function lowestListing(card) {
         return listingsForCard(card.slug)[0] || null;
     }
 
@@ -143,7 +143,8 @@ function lowestListing(card) {
         } else if (name === "buys") {
             requestNotificationPermission();
             renderBuys();
-        } else if (name === "watchlist") {            renderWatchlist();
+        } else if (name === "watchlist") {
+            renderWatchlist();
         } else if (name === "listings") {
             renderMyListings();
         } else if (name === "home") {
@@ -265,7 +266,7 @@ function lowestListing(card) {
 
     /* ---------- Card grid (search results) ---------- */
 
-function cardHTML(card) {
+    function cardHTML(card) {
         const watched = currentUser && myWatchlist.indexOf(card.slug) !== -1;
         const offers = listingsForCard(card.slug);
         const low = offers[0] || null;
@@ -277,21 +278,21 @@ function cardHTML(card) {
 
         const marketStrip = market
             ? '<span class="strip-label">Market</span><span class="strip-price best">' + marketDual(market.market) + '</span>' +
-              '<span class="market-note">' + (market.finish === "Foil" ? "Foil" : "Near Mint") + " · TCGplayer</span>"
+            '<span class="market-note">' + (market.finish === "Foil" ? "Foil" : "Near Mint") + " · TCGplayer</span>"
             : (low
                 ? '<span class="strip-label">From</span><span class="strip-price best">' + priceDual(low.price_mmk) + '</span><span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>"
                 : '<span class="no-listings">No market data</span>');
 
         const communityStrip = market && offers.length
             ? '<div class="community-strip">' +
-              '<span class="strip-label">From</span><span class="strip-price">' + priceDual(low.price_mmk) + '</span>' +
-              '<span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>" +
-              "</div>"
+            '<span class="strip-label">From</span><span class="strip-price">' + priceDual(low.price_mmk) + '</span>' +
+            '<span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>" +
+            "</div>"
             : "";
 
         const buyChip = buyResult
             ? '<span class="buy-chip chip-' + (buyResult.tier === "Buy Now" ? "now" : buyResult.tier === "Watch" ? "watch" : "wait") + '" title="' +
-              escapeHTML(buyResult.reasons.join(" · ")) + '">' + buyResult.tier + " " + buyResult.score + "</span>"
+            escapeHTML(buyResult.reasons.join(" · ")) + '">' + buyResult.tier + " " + buyResult.score + "</span>"
             : "";
 
         return (
@@ -386,7 +387,7 @@ function cardHTML(card) {
                     return (bp ? bp.price_mmk : -1) - (ap ? ap.price_mmk : -1);
                 });
                 break;
-case "offers":
+            case "offers":
                 filtered = filtered.slice().sort(function (a, b) {
                     return listingsForCard(b.slug).length - listingsForCard(a.slug).length;
                 });
@@ -489,7 +490,7 @@ case "offers":
         const price = market
             ? '<div class="sp-label">Market</div><div class="sp-value">' + marketDual(market.market) + "</div>"
             : '<div class="sp-label">' + (low ? "From" : "Community") + '</div><div class="sp-value">' +
-              (low ? priceDual(low.price_mmk) : "No listings") + "</div>";
+            (low ? priceDual(low.price_mmk) : "No listings") + "</div>";
         return (
             '<div class="suggest-item' + (isActive ? " active" : "") + '" data-suggest-card="' + card.slug + '">' +
             '<div class="suggest-art">' +
@@ -741,7 +742,7 @@ case "offers":
             const buyResult = window.RIFTZAY_BUYS ? window.RIFTZAY_BUYS.score(market, slug) : null;
             const buyChip = buyResult
                 ? '<span class="buy-chip chip-' + (buyResult.tier === "Buy Now" ? "now" : buyResult.tier === "Watch" ? "watch" : "wait") + '">' +
-                  buyResult.tier + " · Score " + buyResult.score + "</span>"
+                buyResult.tier + " · Score " + buyResult.score + "</span>"
                 : "";
 
             priceGuide =
@@ -1189,6 +1190,7 @@ case "offers":
     async function refreshListings() {
         allListings = await API.getAllListings();
         updateStats();
+        updateDataSources();
     }
 
     async function handleListingSubmit(e) {
@@ -1307,6 +1309,120 @@ case "offers":
         $("#stat-watchlist").textContent = currentUser ? myWatchlist.length : 0;
     }
 
+    /* ---------- Premium micro-interactions ---------- */
+
+    /* Scroll-reveal with IntersectionObserver */
+    function initScrollReveal() {
+        const els = document.querySelectorAll(".reveal");
+        if (!els.length) return;
+        if (!("IntersectionObserver" in window)) {
+            els.forEach(function (el) { el.classList.add("revealed"); });
+            return;
+        }
+        const obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("revealed");
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+        els.forEach(function (el) { obs.observe(el); });
+    }
+
+    /* Animated stat counters (Apple-style count up) */
+    function animateCounters() {
+        const el = $("#stat-cards");
+        if (!el || !el.textContent) return;
+        const counters = document.querySelectorAll(".stat strong");
+        counters.forEach(function (counter) {
+            const target = parseInt(counter.textContent, 10) || 0;
+            const start = 0;
+            const duration = 1000;
+            const startTime = performance.now();
+            function tick(now) {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                counter.textContent = Math.floor(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        });
+    }
+
+    /* Card tilt on hover (subtle, Apple-like) */
+    function initCardTilt() {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        document.addEventListener("mousemove", function (e) {
+            const card = e.target.closest(".tcg-card");
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            card.style.setProperty("--tilt-x", (y * 4).toFixed(2) + "deg");
+            card.style.setProperty("--tilt-y", (x * 4).toFixed(2) + "deg");
+        }, { passive: true });
+        document.addEventListener("mouseleave", function (e) {
+            const card = e.target.closest(".tcg-card");
+            if (!card) return;
+            card.style.setProperty("--tilt-x", "0deg");
+            card.style.setProperty("--tilt-y", "0deg");
+        }, { passive: true });
+    }
+
+    /* ---------- Data source credibility ---------- */
+
+    function fmtDate(iso) {
+        if (!iso) return "";
+        try {
+            return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        } catch (e) {
+            return "";
+        }
+    }
+
+    function updateDataSources() {
+        const set = function (id, text) {
+            const el = $("#" + id);
+            if (el) el.textContent = text;
+        };
+
+        // Catalog: real Riftbound card database
+        if (CARDS.length) {
+            set("source-catalog", CARDS.length + " cards · riftbound-cards DB");
+        } else {
+            set("source-catalog", "Loading…");
+        }
+
+        // Market prices: Open TCG API (TCGplayer market data)
+        const priceUpdated = window.RIFTZAY_PRICES_UPDATED;
+        const pricedCount = Object.keys(window.RIFTZAY_PRICES || {}).length;
+        if (pricedCount) {
+            set("source-prices", pricedCount + " cards · TCGplayer" + (priceUpdated ? " · " + fmtDate(priceUpdated) : ""));
+        } else {
+            set("source-prices", "Loading…");
+        }
+
+        // Store prices: RiftCompare multi-market feed
+        const marketsUpdated = window.RIFTZAY_MARKETS_UPDATED;
+        const hasMarkets = Object.keys(window.RIFTZAY_PRICES || {}).some(function (slug) {
+            return window.RIFTZAY_PRICES[slug] && window.RIFTZAY_PRICES[slug].rc;
+        });
+        if (hasMarkets) {
+            set("source-markets", "6 markets · RiftCompare" + (marketsUpdated ? " · " + fmtDate(marketsUpdated) : ""));
+        } else {
+            set("source-markets", "6 markets · RiftCompare");
+        }
+
+        // Community listings: Supabase shared database
+        const isCloud = API.mode() === "cloud";
+        if (isCloud) {
+            set("source-listings", allListings.length + " live · Supabase");
+        } else {
+            set("source-listings", "Local preview · this browser");
+        }
+    }
+
     /* ---------- Init ---------- */
 
     /* Leading number of a card number like "139-166" or "sp2-006" */
@@ -1368,6 +1484,9 @@ case "offers":
             populateFilters();
         }
         updateStats();
+        animateCounters();
+        updateDataSources();
+        initCardTilt();
 
         // Restore session
         try {
@@ -1390,12 +1509,14 @@ case "offers":
         }
         updateAuthUI();
         updateStats();
+        updateDataSources();
         checkBuyAlerts();
 
         // Initial render
         renderCards("", "name");
         renderTopPick();
         renderTrending();
+        initScrollReveal();
 
         // Nav
         document.querySelectorAll("[data-nav]").forEach(function (el) {
