@@ -1,0 +1,38 @@
+name: Collect daily price history
+
+# Snapshot TCGplayer market prices every day so the prediction engine has a
+# real time series to forecast from. Also runs on manual dispatch.
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run history collector
+        run: node tools/collect_history.js
+
+      - name: Commit snapshot if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/price_history.js
+          if git diff --cached --quiet; then
+            echo "No price change today - nothing to commit."
+          else
+            git commit -m "Collect daily price snapshot"
+            git push origin main
+            echo "Committed and pushed daily snapshot."
+          fi
