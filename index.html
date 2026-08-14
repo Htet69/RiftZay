@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RiftZay — Riftbound Price Tracker</title>
-    <meta name="description"
-        content="RiftZay — a local Riftbound TCG price guide. Search cards, compare reference prices, and keep a private watchlist." />
+    <title>RiftZay — Riftbound TCG Price Tracker</title>
+    <meta name="description" content="RiftZay — a local Riftbound TCG price guide. Search cards, compare reference prices, and keep a private watchlist." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,295 +18,98 @@
     <header class="site-header">
         <div class="container header-inner">
             <a class="brand" href="#" data-nav="home">
-                <span class="brand-mark" aria-hidden="true">
-                    <svg viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="RiftZay">
-                        <defs>
-                            <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0%" stop-color="#4f8df2" />
-                        <stop offset="100%" stop-color="#1e4fc0" />
-                            </linearGradient>
-                        </defs>
-                        <path fill="url(#brandGrad)" d="M16 2 L29 10 L29 22 L16 30 L3 22 L3 10 Z" />
-                        <path fill="#ffffff" d="M16 8 L21 13 L21 19 L16 24 L11 19 L11 13 Z" />
-                    </svg>
-                </span>
-                <span class="brand-name">Rift<em>Zay</em></span>
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-text">RiftZay</span>
             </a>
-
-            <!-- Primary search with price suggestions -->
-            <div class="header-search">
-                <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
-                    <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" />
-                </svg>
-                <input id="search-input" type="search" placeholder="Search cards, sets, rarities…" autocomplete="off"
-                    aria-label="Search cards" />
-                <button class="search-clear" id="search-clear" aria-label="Clear search" hidden>&times;</button>
-                <div class="search-suggest" id="search-suggest" hidden></div>
-            </div>
-
-            <nav class="main-nav">
-                <a href="#" data-nav="home" class="active">Browse</a>
-                <a href="#" data-nav="buys">Buy Now</a>
-                <a href="#" data-nav="watchlist">Watchlist</a>
-                <a href="#" data-nav="listings">My Listings</a>
+            <nav>
+                <ul class="header-nav">
+                    <li><a class="nav-link" data-nav="home" href="#">Browse</a></li>
+                    <li><a class="nav-link" data-nav="buys" href="#">Buy Now</a></li>
+                    <li><a class="nav-link" data-nav="watchlist" href="#">Watchlist</a></li>
+                    <li><a class="nav-link" data-nav="listings" href="#">Listings</a></li>
+                </ul>
             </nav>
-
-            <div class="auth-area">
-                <span id="user-chip" class="user-chip" hidden></span>
-                <button id="auth-btn" class="btn btn-outline">Sign In</button>
-            </div>
         </div>
     </header>
 
-    <!-- ============ AUTH MODAL ============ -->
-    <div class="modal-overlay" id="auth-modal" hidden>
-        <div class="modal">
-            <button class="modal-close" id="auth-close" aria-label="Close">&times;</button>
-            <h2 id="auth-title">Welcome to RiftZay</h2>
-            <p class="modal-sub" id="auth-sub">Create an account to track Riftbound card prices.</p>
-
-            <div class="data-mode-banner">
-                <span id="mode-dot" class="dot"></span>
-                <span id="mode-text">Local mode</span>
-            </div>
-
-            <form id="auth-form" autocomplete="on">
-                <label class="field">
-                    <span>Email</span>
-                    <input type="email" id="auth-email" required placeholder="you@example.com" />
-                </label>
-                <label class="field" id="username-field">
-                    <span>Username</span>
-                    <input type="text" id="auth-username" placeholder="RiftTracker99" />
-                </label>
-                <label class="field">
-                    <span>Password</span>
-                    <input type="password" id="auth-password" required minlength="6"
-                        placeholder="&bull;&bull;&bull;&bull;&bull;&bull;" />
-                </label>
-                <p class="form-error" id="auth-error" hidden></p>
-                <button type="submit" class="btn btn-primary btn-block" id="auth-submit">Create Account</button>
-            </form>
-
-            <p class="modal-switch">
-                <span id="auth-switch-label">Already have an account?</span>
-                <button class="link-btn" id="auth-switch">Sign In</button>
-            </p>
-        </div>
-    </div>
-
-    <!-- ============ CREATE LISTING MODAL ============ -->
-    <div class="modal-overlay" id="listing-modal" hidden>
-        <div class="modal modal-wide">
-            <button class="modal-close" id="listing-close" aria-label="Close">&times;</button>
-            <h2>List a card for sale</h2>
-            <p class="modal-sub" id="listing-card-name">Choose a card</p>
-            <form id="listing-form">
-                <input type="hidden" id="listing-card-slug" />
-                <div class="form-grid">
-                    <label class="field">
-                        <span>Condition</span>
-                        <select id="listing-condition" required>
-                            <option>Near Mint</option>
-                            <option>Lightly Played</option>
-                            <option>Moderately Played</option>
-                            <option>Heavily Played</option>
-                            <option>Damaged</option>
-                        </select>
-                    </label>
-                    <label class="field">
-                        <span>Version</span>
-                        <select id="listing-variant" required>
-                            <option>Normal</option>
-                            <option>Foil</option>
-                            <option>Alternate Art</option>
-                        </select>
-                    </label>
-                    <label class="field">
-                        <span>Price (MMK)</span>
-                        <input type="number" id="listing-price" min="1" step="100" required placeholder="25000" />
-                        <span class="field-hint" id="listing-usd-hint"></span>
-                    </label>
-                    <label class="field">
-                        <span>Quantity</span>
-                        <input type="number" id="listing-quantity" min="1" max="999" value="1" required />
-                    </label>
-                </div>
-                <label class="field">
-                    <span>City / Township</span>
-                    <input type="text" id="listing-location" minlength="2" maxlength="100" required placeholder="e.g. Yangon, Sanchaung" />
-                </label>
-                <label class="field">
-                    <span>Contact</span>
-                    <input type="text" id="listing-contact" minlength="3" maxlength="160" required placeholder="Phone, Messenger link, Viber, or Telegram" />
-                </label>
-                <p class="form-help">Buyers will use this contact information to arrange payment and delivery directly with you.</p>
-                <p class="form-error" id="listing-error" hidden></p>
-                <button type="submit" class="btn btn-primary btn-block">Publish Listing</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- ============ TOAST ============ -->
-    <div class="toast" id="toast" hidden></div>
-
-    <!-- ============ HOME / BROWSE VIEW ============ -->
-    <section class="view" id="view-home">
-        <div class="search-hero">
-            <div class="container">
-                <h1>Find the best price on any Riftbound card.</h1>
-                <p>Search cards, compare live seller offers, and trade with collectors in your local community.</p>
-                <div class="price-guide-note"><strong>Myanmar community market</strong> · Prices in MMK · Buyer and seller listings</div>
-                <div class="hero-search">
-                    <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
-                        <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
-                    </svg>
-                    <input id="hero-search-input" type="search" placeholder="e.g. Rogue Assassin, Vendetta, Showcase, Legend…"
-                        autocomplete="off" aria-label="Search hero" />
-                    <div class="search-suggest hero-suggest" id="hero-suggest" hidden></div>
-                </div>
-                <div class="hero-stats">
-<div class="stat"><strong id="stat-cards">0</strong><span>Cards Tracked</span></div>
-                    <div class="stat"><strong id="stat-priced">0</strong><span>With Market Price</span></div>
-                    <div class="stat"><strong id="stat-markets">0</strong><span>Active Listings</span></div>
-                    <div class="stat"><strong id="stat-watchlist">0</strong><span>Cards on Watchlist</span></div>
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+        <div class="container hero-inner">
+            <div class="hero-content">
+                <h1 class="hero-title">Riftbound TCG Price Guide</h1>
+                <p class="hero-sub">Search the full catalog, filter by set/rarity, and check reference prices.</p>
+                <div class="hero-actions">
+                    <input class="hero-search" type="search" placeholder="Search cards...">
+                    <button class="btn-primary">Search</button>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="container browse-body">
-            <div class="results-head">
-                <h2 id="results-title">All Cards</h2>
-                <div class="results-meta">
-                    <span id="results-count"></span>
-                    <select id="sort-select" aria-label="Sort results">
-                        <option value="name">Sort: Name</option>
-                        <option value="market-low">Sort: Market Price (low to high)</option>
-                        <option value="market-high">Sort: Market Price (high to low)</option>
-                        <option value="lowest">Sort: Lowest Price</option>
-                        <option value="highest">Sort: Highest Price</option>
-                        <option value="offers">Sort: Most Offers</option>
-                        <option value="newest">Sort: Newest Set</option>
-                    </select>
+    <!-- ============ STATS ============ -->
+    <section class="stats">
+        <div class="container">
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-cards">0</div>
+                    <div class="stat-label">Cards</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-priced">0</div>
+                    <div class="stat-label">Priced</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-markets">0</div>
+                    <div class="stat-label">Markets</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="stat-watchlist">0</div>
+                    <div class="stat-label">Watchlist</div>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <!-- TCGplayer-style filters (options are built from the live card data) -->
-            <div class="filter-bar">
-                <select id="filter-set" aria-label="Filter by set">
-                    <option value="">All Sets</option>
-                </select>
-                <select id="filter-rarity" aria-label="Filter by rarity">
-                    <option value="">All Rarities</option>
-                </select>
-                <select id="filter-type" aria-label="Filter by card type">
-                    <option value="">All Types</option>
-                </select>
+    <!-- ============ CARD GRID ============ -->
+    <section class="section" id="section-home">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Featured Cards</h2>
+                <p class="section-sub">Popular cards from the Riftbound catalog.</p>
             </div>
-
             <div class="card-grid" id="card-grid"></div>
-            <p class="empty-state" id="empty-state" hidden>No cards match your search. Try a different name, set, or
-                rarity.</p>
-
-            <!-- Pagination -->
-            <div class="pagination" id="pagination" hidden></div>
+            <div class="empty-state" id="empty-state">No cards found. <a href="#" id="search-input" class="search-link">Try a different search.</a></div>
         </div>
     </section>
 
-<!-- ============ BUY NOW VIEW (smart picks) ============ -->
-    <section class="view" id="view-buys" hidden>
-        <div class="container browse-body">
-            <div class="results-head buys-head">
-                <div>
-                    <h2 class="section-title">Buy Now <span class="buys-badge">AI Scored</span></h2>
-                    <p class="section-sub">Cards ranked by how much value is on the table right now — scored against
-                        TCGplayer market, per-condition prices, and store prices in six markets.</p>
-                </div>
+    <!-- ============ BUY NOW ============ -->
+    <section class="section" id="section-buys">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Buy Now</h2>
+                <p class="section-sub">Cards with the best value on the market right now.</p>
             </div>
-            <div class="buys-bar">
-                <label class="buys-filter">
-                    <span>Tier</span>
-                    <select id="buys-tier" aria-label="Filter by buy tier">
-                        <option value="all">All tiers</option>
-                        <option value="Buy Now">Buy Now</option>
-                        <option value="Watch">Watch</option>
-                        <option value="Wait">Wait</option>
-                    </select>
-                </label>
-                <label class="buys-filter">
-                    <span>Show</span>
-                    <select id="buys-limit" aria-label="How many picks to show">
-                        <option value="12">Top 12</option>
-                        <option value="24" selected>Top 24</option>
-                        <option value="50">Top 50</option>
-                    </select>
-                </label>
-                <span class="buys-hint">Scores refresh with market prices (twice a day).</span>
-            </div>
+            <div class="buys-empty" id="buys-empty">No cards meet the current criteria.</div>
             <div class="buys-list" id="buys-list"></div>
-            <p class="empty-state" id="buys-empty" hidden>No scored cards yet. Market prices are still loading.</p>
         </div>
     </section>
 
-    <!-- ============ SELLER LISTINGS VIEW ============ -->
-    <section class="view" id="view-listings" hidden>
-        <div class="container browse-body">
-            <div class="results-head">
-                <div>
-                    <h2 class="section-title">My Listings</h2>
-                    <p class="section-sub">Manage cards you are offering to the local community.</p>
-                </div>
-            </div>
-            <div id="my-listings"></div>
-            <p class="empty-state" id="my-listings-empty">Search for a card, open it, and choose “Sell this card” to publish your first listing.</p>
-        </div>
-    </section>
-
-    <!-- ============ PRODUCT VIEW (single card, TCGplayer-style) ============ -->
-    <section class="view" id="view-product" hidden>
-        <div class="container">
-            <nav class="breadcrumb">
-                <a href="#" data-nav="home">Browse</a>
-                <span class="crumb-sep">/</span>
-                <span id="crumb-card">Card</span>
-            </nav>
-            <div id="product-content"></div>
-        </div>
-    </section>
-
-    <!-- ============ WATCHLIST VIEW ============ -->
-    <section class="view" id="view-watchlist" hidden>
-        <div class="container">
-            <div class="results-head">
-                <h2 class="section-title">My Watchlist</h2>
-            </div>
-            <p class="section-sub">Cards you're tracking across all markets.</p>
-            <div id="watchlist-grid" class="card-grid"></div>
-            <p class="empty-state" id="watchlist-empty">Your watchlist is empty. Tap the ★ on any card to track it.</p>
-        </div>
-    </section>
+    <!-- ============ NAVIGATION ============ -->
+    <a class="main-nav-trigger" data-nav="main">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h6m6-6h3"/>
+        </svg>
+    </a>
 
     <!-- ============ FOOTER ============ -->
     <footer class="site-footer">
         <div class="container footer-inner">
-            <span class="brand-name">Rift<em>Zay</em></span>
-            <p>Myanmar Riftbound Community Marketplace — search, list, and trade.</p>
-            <p class="footer-note">&copy; 2026 RiftZay. Not affiliated with Riftbound or its publishers.</p>
-            <span id="mode-chip" class="mode-chip" title="Data mode"></span>
+            <p>RiftZay — Riftbound TCG Price Tracker</p>
+            <p class="footer-small">Reference prices from TCGplayer · Tournament metagame from riftdecks.com</p>
         </div>
     </footer>
 
-<!-- Supabase browser client (cloud mode). Remove only if you stay in local mode. -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>
-    <!-- Bundled snapshot of the real Riftbound catalog (offline/fallback) -->
-    <script src="data/cards.js"></script>
-    <!-- Loader: fetches the freshest daily snapshot, then exposes the catalog -->
-    <script src="js/cards.js"></script>
+    <!-- ============ SCRIPTS ============ -->
     <!-- Bundled snapshot of real TCGplayer market prices (offline/fallback) -->
     <script src="data/prices.js"></script>
     <!-- Loader: fetches live pricing from the Open TCG API, joins to cards -->
@@ -317,12 +118,11 @@
     <script src="data/price_history.js"></script>
     <!-- Tournament metagame snapshot (riftdecks.com competitive data) -->
     <script src="data/meta.js"></script>
-    <!-- Price forecast engine (trend + momentum on collected history) -->
+    <!-- Price forecast engine (trend + momentum on collected history + tournament meta) -->
     <script src="js/predict.js"></script>
     <!-- Smart Buy-Now scoring engine (transparent, rule-based + forecast) -->
     <script src="js/buys.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>
-
 </html>
