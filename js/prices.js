@@ -19,7 +19,7 @@
     "use strict";
 
     var BASE = "https://tcgtracking.com/tcgapi/v1/89/sets/";
-    var LS_KEY = "riftzay_market_prices_v2";
+    var LS_KEY = "riftzay_market_prices_v3";
     var LS_AGE = 12 * 60 * 60 * 1000; // refresh market prices twice a day
 
     // All Riftbound sets that carry TCGplayer prices.
@@ -91,11 +91,52 @@
         });
     }
 
-    function applyFromLive(bySet, updated) {
+    /* Aggregate one set's per-condition SKU matrix
+     * ({productId: {skuId: {cnd, var, lng, mkt, low}}}) into
+     * {productId: {Normal: {NM: [mkt, low], ...}, Foil: {...}}}.
+     * Prefers English listings and keeps the first SKU per (finish, cnd). */
+    function aggregateConds(skuPayload) {
+        var aggByPid = {};
+        var products = (skuPayload && skuPayload.products) || {};
+        Object.keys(products).forEach(function (pid) {
+            var agg = {};
+            Object.keys(products[pid]).forEach(function (skuId) {
+                var sku = products[pid][skuId];
+                if (!sku || !sku.var || sku.mkt == null) return;
+                if (sku.lng && sku.lng !== "EN") return;
+                var v = agg[sku.var] = agg[sku.var] || {};
+                if (!v[sku.cnd]) v[sku.cnd] = [sku.mkt, sku.low];
+            });
+            var out = {};
+            Object.keys(agg).forEach(function (fin) {
+                var c = {};
+                Object.keys(agg[fin]).forEach(function (cnd) {
+                    c[cnd] = agg[fin][cnd];
+                });
+                if (Object.keys(c).length) out[fin] = c;
+            });
+            if (Object.keys(out).length) aggByPid[pid] = out;
+        });
+        return aggByPid;
+    }
+
+    /* Merge condition data into {slug: price record} via the reverse map. */
+    function applyConds(out, rev, condsByPid) {
+        Object.keys(condsByPid).forEach(function (pid) {
+            var slug = rev[pid];
+            if (!slug || !out[slug]) return;
+            out[slug].conds = condsByPid[pid];
+        });
+    }
+
+    function applyFromLive(bySet, skusBySet, updated) {
         var rev = reverseProductMap();
         var out = {};
         Object.keys(bySet).forEach(function (abbr) {
             applySetPrices(out, rev, bySet[abbr]);
+            if (skusBySet && skusBySet[abbr]) {
+                applyConds(out, rev, aggregateConds(skusBySet[abbr]));
+            }
         });
         return { ts: Date.now(), updated: updated, prices: out };
     }
@@ -114,19 +155,25 @@
             // 2) Live pricing from the Open TCG API (refreshed nightly)
             if (!result) {
                 var bySet = {};
+                var skusBySet = {};
                 var updated = null;
                 var pending = SETS.map(function (s) {
-                    return fetchJSON(BASE + s.id + "/pricing").then(function (data) {
-                        bySet[s.abbr] = data;
-                        if (!updated) updated = data.updated;
-                    }).catch(function () {
+                    return Promise.all([
+                        fetchJSON(BASE + s.id + "/pricing").then(function (data) {
+                            bySet[s.abbr] = data;
+                            if (!updated) updated = data.updated;
+                        }),
+                        fetchJSON(BASE + s.id + "/skus").then(function (data) {
+                            skusBySet[s.abbr] = data;
+                        }),
+                    ]).catch(function () {
                         /* one set failing should not sink the whole refresh */
                     });
                 });
                 try {
                     await Promise.all(pending);
                     if (Object.keys(bySet).length) {
-                        result = applyFromLive(bySet, updated);
+                        result = applyFromLive(bySet, skusBySet, updated);
                         if (Object.keys(result.prices).length) {
                             writeLS(LS_KEY, result);
                         }

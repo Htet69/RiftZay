@@ -888,6 +888,34 @@ em {
     margin-left: auto;
 }
 
+.pg-conds {
+    margin-top: 14px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border-strong);
+}
+
+.pg-cond-head {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--accent);
+    padding: 8px 0 6px;
+}
+
+.pg-cond-row {
+    padding: 6px 0;
+}
+
+.pg-cond-row .pg-finish {
+    font-weight: 400;
+    font-size: 12.5px;
+}
+
+.pg-cond-row .pg-market {
+    font-size: 13.5px;
+}
+
 .card-foot {
     display: flex;
     align-items: center;

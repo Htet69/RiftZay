@@ -626,10 +626,50 @@ case "offers":
             const updated = window.RIFTZAY_PRICES_UPDATED
                 ? new Date(window.RIFTZAY_PRICES_UPDATED).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                 : "";
+
+            /* Per-condition prices from the SKU matrix (NM/LP/MP/HP/DMG).
+             * Shown for each finish that has condition data. */
+            const COND_NAMES = {
+                NM: "Near Mint",
+                LP: "Lightly Played",
+                MP: "Moderately Played",
+                HP: "Heavily Played",
+                DMG: "Damaged",
+            };
+            let condRows = "";
+            if (market.conds) {
+                const conds = market.conds;
+                ["Normal", "Foil"].forEach(function (fin) {
+                    const c = conds[fin];
+                    if (!c) return;
+                    const head =
+                        '<div class="pg-row pg-cond-head">' +
+                        '<span class="pg-finish">By Condition · ' + fin + "</span>" +
+                        '<span class="pg-market">Market</span>' +
+                        '<span class="pg-low">Low</span>' +
+                        "</div>";
+                    const body = Object.keys(COND_NAMES)
+                        .map(function (cnd) {
+                            const v = c[cnd];
+                            if (!v) return "";
+                            return (
+                                '<div class="pg-row pg-cond-row">' +
+                                '<span class="pg-finish">' + COND_NAMES[cnd] + "</span>" +
+                                '<span class="pg-market">' + marketDual(v[0]) + "</span>" +
+                                '<span class="pg-low">' + (v[1] != null ? marketDual(v[1]) : "—") + "</span>" +
+                                "</div>"
+                            );
+                        })
+                        .join("");
+                    if (body) condRows += head + body;
+                });
+            }
+
             priceGuide =
                 '<div class="price-guide">' +
                 '<div class="price-guide-title">Market Price Guide <span class="guide-badge">TCGplayer · updated ' + updated + "</span></div>" +
                 rows.join("") +
+                (condRows ? '<div class="pg-conds">' + condRows + "</div>" : "") +
                 "</div>";
         }
 

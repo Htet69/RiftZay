@@ -66,6 +66,7 @@ The app loads `data/cards.js` instantly (a bundled snapshot), then silently fetc
 Every card that TCGplayer sells now shows its **real market price** (near-mint and foil, low + market) pulled live from the **Open TCG API** (tcgtracking.com — category 89, Riftbound). It's free, needs no key, refreshes nightly from TCGplayer data, and works straight from the static site because its CORS headers are open. Prices are cached in each visitor's browser for 12h; a bundled snapshot in `data/prices.js` keeps the site working offline.
 
 - Market prices appear on card tiles, search suggestions, and a "Market Price Guide" on each card page, in USD with an approximate MMK equivalent (using `MMK_PER_USD` in `js/config.js`).
+- The price guide also breaks each card down **by condition** (Near Mint / Lightly Played / Moderately Played / Heavily Played / Damaged) for both finishes, pulled from TCGplayer's per-SKU listings — so buyers can compare what a well-worn copy actually costs.
 - Sort by market price low→high / high→low in the browse view.
 - Cards TCGplayer doesn't list (some runes, tokens, judge promos) simply show no market price and fall back to community listings.
 
