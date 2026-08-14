@@ -13,9 +13,15 @@
  * (ogn-045-298) is exactly a RiftZay card slug, so we can join directly to
  * the price data.
  *
- * Uses curl (installed on GitHub Actions ubuntu runners and Windows 10+) to
- * fetch the page - the site's bot protection rejects Node's default HTTP
- * fingerprint but passes a plain browser User-Agent from curl.
+ * The page sits behind Cloudflare bot protection, so it is fetched with
+ * curl (installed on GitHub Actions ubuntu runners and Windows 10+) using a
+ * browser User-Agent; Node's default HTTP fingerprint is rejected.
+ *
+ * IMPORTANT - best effort: if the source is unreachable (e.g. from a
+ * datacenter IP that Cloudflare blocks), the existing data/meta.js is left
+ * untouched rather than overwritten, so the job never fails and the
+ * prediction engine keeps using the last known-good snapshot. Run locally
+ * (node tools/collect_meta.js) to refresh whenever the network can reach it.
  *
  * Runs nightly with the price collector. Can be run locally:
  *   node tools/collect_meta.js
@@ -47,17 +53,37 @@ function todayStr() {
     return new Date().toISOString().slice(0, 10);
 }
 
-function curl(url) {
-    return execFileSync('curl', ['-s', '-A', UA, '--max-time', '60', url], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+function fetchHtml() {
+    // curl with a browser UA (Node's fingerprint is blocked by Cloudflare).
+    try {
+        return execFileSync('curl', ['-s', '-A', UA, '--max-time', '60', URL], {
+            encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'],
+        });
+    } catch (e) {
+        console.log('curl failed:', (e.message || '').split('\n')[0]);
+        return null;
+    }
+}
+
+function extractData(html) {
+    if (!html || html.length < 1000) return null;
+    const m = html.match(/var DATA = (\[.*?\]);\s*$/m);
+    if (!m) return null;
+    try { return JSON.parse(m[1]); }
+    catch (e) { console.log('DATA parse error:', e.message.split('\n')[0]); return null; }
 }
 
 function main() {
     console.log('fetching', URL, '(via curl)');
-    let html = curl(URL);
-
-    const m = html.match(/var DATA = (\[.*?\]);\s*$/m);
-    if (!m) throw new Error('DATA array not found on ' + URL);
-    const rows = JSON.parse(m[1]);
+    const html = fetchHtml();
+    const rows = extractData(html);
+    if (!rows) {
+        // Source unreachable / blocked: keep the last known-good snapshot so
+        // we never break the pipeline or ship stale data overwritten by null.
+        console.log('Could not reach the tournament source (' + URL + ') - keeping existing data/meta.js');
+        console.log('EXIT: skipped (no fresh data)');
+        return;
+    }
     console.log('rows fetched:', rows.length);
 
     const cards = {};
