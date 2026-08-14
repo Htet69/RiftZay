@@ -43,10 +43,12 @@ RiftZay/
 ├── supabase.sql
 ├── css/styles.css
 ├── data/
-│   └── cards.js        (bundled snapshot of the real catalog — fallback/offline)
+│   ├── cards.js         (bundled snapshot of the real catalog — fallback/offline)
+│   └── prices.js        (bundled snapshot of real TCGplayer market prices — fallback/offline)
 └── js/
     ├── config.js
-    ├── cards.js        (loader: fetches the freshest daily snapshot)
+    ├── cards.js         (loader: fetches the freshest daily catalog snapshot)
+    ├── prices.js        (loader: fetches live market pricing from the Open TCG API)
     ├── api.js
     └── app.js
 ```
@@ -59,6 +61,19 @@ The app loads `data/cards.js` instantly (a bundled snapshot), then silently fetc
 - If the network is unavailable, the bundled snapshot keeps the site working.
 - Card names, ability text, artwork, and set names are © Riot Games, mirrored for non-commercial community use under Riot's fan-content policy.
 
+## How prices update
+
+Every card that TCGplayer sells now shows its **real market price** (near-mint and foil, low + market) pulled live from the **Open TCG API** (tcgtracking.com — category 89, Riftbound). It's free, needs no key, refreshes nightly from TCGplayer data, and works straight from the static site because its CORS headers are open. Prices are cached in each visitor's browser for 12h; a bundled snapshot in `data/prices.js` keeps the site working offline.
+
+- Market prices appear on card tiles, search suggestions, and a "Market Price Guide" on each card page, in USD with an approximate MMK equivalent (using `MMK_PER_USD` in `js/config.js`).
+- Sort by market price low→high / high→low in the browse view.
+- Cards TCGplayer doesn't list (some runes, tokens, judge promos) simply show no market price and fall back to community listings.
+
 ## Price-data note
 
-Listing prices are the **live community listings** members publish in MMK (the USD equivalent next to them is computed locally from `MMK_PER_USD` and is only an estimate). This is a community marketplace, not a TCGplayer data feed — the prices that matter come from your own sellers. Confirm card condition, identity, payment, and delivery details before trading.
+Two kinds of prices coexist on RiftZay:
+
+1. **Real market prices** from TCGplayer (via the Open TCG API) — shown as "Market" / in the price guide.
+2. **Community listings** — prices members publish in MMK (the USD equivalent next to them is computed locally from `MMK_PER_USD` and is only an estimate).
+
+Community listings are the live offers from your own sellers; market prices are a global reference. Confirm card condition, identity, payment, and delivery details before trading.

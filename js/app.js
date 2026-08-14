@@ -57,6 +57,24 @@
         return fmt(mmk) + ' <span class="usd-approx">≈ ' + fmtUSD(mmk) + "</span>";
     }
 
+    /* USD market price (from the real price feed) with an approximate MMK
+     * equivalent next to it, e.g. "$1.24 ≈ MMK 5,456". */
+    function marketDual(usd) {
+        const v = Number(usd);
+        if (!(v > 0)) return "—";
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            maximumFractionDigits: 2,
+        }).format(v) + ' <span class="usd-approx">≈ ' + fmt(Math.round(v * MMK_PER_USD)) + "</span>";
+    }
+
+    /* Real market price record for a card slug, or null */
+    function marketPrice(slug) {
+        const p = (window.RIFTZAY_PRICES || {})[slug];
+        return p && p.market != null ? p : null;
+    }
+
     function listingsForCard(slug) {
         return allListings
             .filter(function (listing) {
@@ -223,9 +241,24 @@ function cardHTML(card) {
         const watched = currentUser && myWatchlist.indexOf(card.slug) !== -1;
         const offers = listingsForCard(card.slug);
         const low = offers[0] || null;
+        const market = marketPrice(card.slug);
 
         const typeLabel = card.type ? cap(card.type) : "";
         const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
+
+        const marketStrip = market
+            ? '<span class="strip-label">Market</span><span class="strip-price best">' + marketDual(market.market) + '</span>' +
+              '<span class="market-note">' + (market.finish === "Foil" ? "Foil" : "Near Mint") + " · TCGplayer</span>"
+            : (low
+                ? '<span class="strip-label">From</span><span class="strip-price best">' + priceDual(low.price_mmk) + '</span><span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>"
+                : '<span class="no-listings">No market data</span>');
+
+        const communityStrip = market && offers.length
+            ? '<div class="community-strip">' +
+              '<span class="strip-label">From</span><span class="strip-price">' + priceDual(low.price_mmk) + '</span>' +
+              '<span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>" +
+              "</div>"
+            : "";
 
         return (
             '<article class="tcg-card">' +
@@ -244,13 +277,10 @@ function cardHTML(card) {
             '<span class="rarity rarity-' + card.rarity + '">' + cap(card.rarity) + "</span>" +
             "</div>" +
             (typeLabel ? '<div class="card-type">' + typeLabel + champTag + "</div>" : "") +
-            '<div class="market-strip">' +
-            (low
-                ? '<span class="strip-label">From</span><span class="strip-price best">' + priceDual(low.price_mmk) + '</span><span class="listing-count">' + offers.length + (offers.length === 1 ? " listing" : " listings") + "</span>"
-                : '<span class="no-listings">No active listings</span>') +
-            "</div>" +
+            '<div class="market-strip">' + marketStrip + "</div>" +
+            communityStrip +
             '<div class="card-foot">' +
-            '<span class="best-deal">' + (low ? '<strong>' + low.condition + '</strong> · ' + low.location : "Be the first seller") + "</span>" +
+            '<span class="best-deal">' + (low ? '<strong>' + low.condition + '</strong> · ' + low.location : (market ? 'Market price from TCGplayer' : "Be the first seller")) + "</span>" +
             '<span class="more-link" data-detail="' + card.slug + '">View Offers →</span>' +
             "</div>" +
             "</article>"
@@ -290,6 +320,20 @@ function cardHTML(card) {
         });
 
         switch (sortKey) {
+            case "market-low":
+                filtered = filtered.slice().sort(function (a, b) {
+                    const ap = marketPrice(a.slug);
+                    const bp = marketPrice(b.slug);
+                    return (ap ? ap.market : Infinity) - (bp ? bp.market : Infinity);
+                });
+                break;
+            case "market-high":
+                filtered = filtered.slice().sort(function (a, b) {
+                    const ap = marketPrice(a.slug);
+                    const bp = marketPrice(b.slug);
+                    return (bp ? bp.market : -1) - (ap ? ap.market : -1);
+                });
+                break;
             case "lowest":
                 filtered = filtered.slice().sort(function (a, b) {
                     const ap = lowestListing(a);
@@ -407,7 +451,12 @@ case "offers":
     function suggestionHTML(card, i) {
         const isActive = i === suggestIndex;
         const rarityClass = "rarity-" + card.rarity;
+        const market = marketPrice(card.slug);
         const low = lowestListing(card);
+        const price = market
+            ? '<div class="sp-label">Market</div><div class="sp-value">' + marketDual(market.market) + "</div>"
+            : '<div class="sp-label">' + (low ? "From" : "Community") + '</div><div class="sp-value">' +
+              (low ? priceDual(low.price_mmk) : "No listings") + "</div>";
         return (
             '<div class="suggest-item' + (isActive ? " active" : "") + '" data-suggest-card="' + card.slug + '">' +
             '<div class="suggest-art">' +
@@ -419,10 +468,7 @@ case "offers":
             '<div class="suggest-set">' + card.set + " · " + card.setCode + " " + card.number + "</div>" +
             '<span class="suggest-rarity ' + rarityClass + '">' + cap(card.rarity) + "</span>" +
             "</div>" +
-            '<div class="suggest-price">' +
-            '<div class="sp-label">' + (low ? "From" : "Community") + "</div>" +
-            '<div class="sp-value">' + (low ? priceDual(low.price_mmk) : "No listings") + "</div>" +
-            "</div>" +
+            '<div class="suggest-price">' + price + "</div>" +
             "</div>"
         );
     }
@@ -564,6 +610,34 @@ case "offers":
         if (card.might !== null && card.might !== undefined) stats.push("Might " + card.might);
         const statsHTML = stats.length ? '<div class="card-stats">' + stats.join(" · ") + "</div>" : "";
 
+        /* Real TCGplayer market prices (from the Open TCG API) */
+        const market = marketPrice(card.slug);
+        let priceGuide = "";
+        if (market) {
+            const rows = [];
+            const addRow = function (label, p) {
+                if (p && p.market != null) {
+                    rows.push(
+                        '<div class="pg-row">' +
+                        '<span class="pg-finish">' + label + "</span>" +
+                        '<span class="pg-market">' + marketDual(p.market) + "</span>" +
+                        '<span class="pg-low">Low ' + marketDual(p.low) + "</span>" +
+                        "</div>"
+                    );
+                }
+            };
+            addRow("Near Mint", market.normal);
+            addRow("Foil", market.foil);
+            const updated = window.RIFTZAY_PRICES_UPDATED
+                ? new Date(window.RIFTZAY_PRICES_UPDATED).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : "";
+            priceGuide =
+                '<div class="price-guide">' +
+                '<div class="price-guide-title">Market Price Guide <span class="guide-badge">TCGplayer · updated ' + updated + "</span></div>" +
+                rows.join("") +
+                "</div>";
+        }
+
         $("#product-content").innerHTML =
             '<div class="product-layout">' +
             '<div class="product-art">' +
@@ -601,6 +675,7 @@ case "offers":
             '<div class="pb-note">' + offers.length + (offers.length === 1 ? " seller" : " sellers") + "</div>" +
             "</div>" +
             "</div>" +
+            priceGuide +
             '<div class="product-actions">' +
             '<button class="btn btn-primary" data-watch="' + card.slug + '">' +
             (watched ? "★ In Watchlist" : "☆ Add to Watchlist") +
@@ -780,6 +855,10 @@ case "offers":
 
     function updateStats() {
         $("#stat-cards").textContent = CARDS.length;
+        const priced = Object.keys(window.RIFTZAY_PRICES || {}).filter(function (slug) {
+            return CARD_BY_SLUG[slug];
+        }).length;
+        $("#stat-priced").textContent = priced;
         $("#stat-markets").textContent = allListings.length;
         $("#stat-watchlist").textContent = currentUser ? myWatchlist.length : 0;
     }
@@ -831,6 +910,13 @@ case "offers":
         CARDS = window.RIFTZAY_CARDS || [];
         CARD_BY_SLUG = window.RIFTZAY_CARD_BY_SLUG || {};
         SETS = window.RIFTZAY_SETS || {};
+
+        // Load real market prices (bundled snapshot -> live Open TCG API)
+        try {
+            await window.RIFTZAY_PRICES_READY;
+        } catch (e) {
+            /* prices stay empty; cards still render without them */
+        }
 
         if (!CARDS.length) {
             showToast("The card catalog could not be loaded. Check your connection and refresh.", "error");
