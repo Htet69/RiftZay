@@ -789,6 +789,7 @@ case "offers":
             "</div>" +
             "</div>" +
             priceGuide +
+            priceTrendHTML(slug) +
             '<div class="product-actions">' +
             '<button class="btn btn-primary" data-watch="' + card.slug + '">' +
             (watched ? "★ In Watchlist" : "☆ Add to Watchlist") +
@@ -855,6 +856,114 @@ case "offers":
             arrow + " " + pct + ' · ' + fc.confidence + '%</span>';
     }
 
+    /* Mini trend chart + "why buy/wait" explanation. Renders an SVG line of
+     * the collected market history with a dashed 30-day projection, plus a
+     * plain-language reason tied to the direction. */
+    function priceTrendHTML(slug) {
+        if (!window.RIFTZAY_PREDICT) return "";
+        const pts = window.RIFTZAY_PREDICT.seriesFor(slug);
+        const fc = window.RIFTZAY_PREDICT.forecast(slug);
+
+        let body = "";
+        let why = "";
+        if (!pts.length) {
+            body = '<div class="trend-empty">No price history for this card yet.</div>';
+            why = "RiftZay started snapshotting daily prices — trends appear as history builds.";
+        } else if (!fc || !fc.ready) {
+            body = '<div class="trend-empty">Collecting history… ' + pts.length + "/" + window.RIFTZAY_PREDICT.MIN_DAYS + " days</div>";
+            why = "Forecasts need a week of daily snapshots. Check back in a few days for this card's trend.";
+        } else {
+            body = sparklineSVG(pts, fc);
+            const pct = fc.pct30 >= 0 ? "+" + fc.pct30 + "%" : fc.pct30 + "%";
+            if (fc.direction === "up") {
+                why = 'The price is trending <strong>up</strong> — projected <strong>' + pct +
+                    "</strong> in 30 days. Buying now locks in today's price before it climbs further.";
+            } else if (fc.direction === "down") {
+                why = 'The price is trending <strong>down</strong> — projected <strong>' + pct +
+                    "</strong> in 30 days. If you're flexible, waiting could get a better deal, but the discount may not last.";
+            } else {
+                why = "The price has been <strong>stable</strong> over the collected window. With no clear move either way, the decision comes down to today's value signals.";
+            }
+            why += ' <span class="trend-conf">(confidence ' + fc.confidence + "%)</span>";
+        }
+
+        return (
+            '<div class="trend-block">' +
+            '<div class="trend-head">' +
+            '<span class="trend-title">Price Trend</span>' +
+            forecastChip(slug) +
+            "</div>" +
+            body +
+            '<div class="trend-why">' + why + "</div>" +
+            "</div>"
+        );
+    }
+
+    /* Compact SVG line of history + dashed projection to +30 days. */
+    function sparklineSVG(pts, fc) {
+        const W = 320, H = 88, PAD = 6;
+        const vals = pts.map(function (p) { return p.v; });
+        const last = vals[vals.length - 1];
+        const proj = last * (1 + fc.pct30 / 100);
+        const maxV = Math.max.apply(null, vals.concat([proj]));
+        const minV = Math.min.apply(null, vals.concat([proj]));
+        const span = (maxV - minV) || 1;
+
+        const xAt = function (i) { return PAD + (i / Math.max(pts.length, 1)) * (W - PAD * 2); };
+        const yAt = function (v) { return H - PAD - ((v - minV) / span) * (H - PAD * 2); };
+
+        let hist = "";
+        vals.forEach(function (v, i) {
+            hist += (i ? " L" : "M") + xAt(i).toFixed(1) + " " + yAt(v).toFixed(1);
+        });
+        const projX = W - PAD;
+        const lastX = xAt(vals.length - 1);
+        const projPath = "M" + lastX.toFixed(1) + " " + yAt(last).toFixed(1) + " L" + projX + " " + yAt(proj).toFixed(1);
+
+        // area fill under the history line
+        let area = hist + " L" + xAt(vals.length - 1).toFixed(1) + " " + (H - PAD) + " L" + PAD + " " + (H - PAD) + " Z";
+
+        const cls = fc.direction === "up" ? "tr-up" : fc.direction === "down" ? "tr-down" : "tr-flat";
+        return (
+            '<svg class="trend-chart" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-label="Price trend chart">' +
+            '<path class="trend-area" d="' + area + '" />' +
+            '<path class="trend-line ' + cls + '" d="' + hist + '" />' +
+            '<path class="trend-proj" d="' + projPath + '" />' +
+            '<circle class="trend-dot" cx="' + lastX.toFixed(1) + '" cy="' + yAt(last).toFixed(1) + '" r="2.5" />' +
+            "</svg>" +
+            '<div class="trend-labels"><span>oldest</span><span>today</span><span>+30d</span></div>'
+        );
+    }
+
+    /* Compact 3-4cm sparkline for list rows (no labels, tiny). */
+    function miniSparkline(slug) {
+        if (!window.RIFTZAY_PREDICT) return "";
+        const pts = window.RIFTZAY_PREDICT.seriesFor(slug);
+        const fc = window.RIFTZAY_PREDICT.forecast(slug);
+        if (!pts.length || !fc || !fc.ready) return "";
+        const W = 84, H = 28, PAD = 3;
+        const vals = pts.map(function (p) { return p.v; });
+        const last = vals[vals.length - 1];
+        const proj = last * (1 + fc.pct30 / 100);
+        const maxV = Math.max.apply(null, vals.concat([proj]));
+        const minV = Math.min.apply(null, vals.concat([proj]));
+        const span = (maxV - minV) || 1;
+        const xAt = function (i) { return PAD + (i / Math.max(pts.length, 1)) * (W - PAD * 2); };
+        const yAt = function (v) { return H - PAD - ((v - minV) / span) * (H - PAD * 2); };
+        let hist = "";
+        vals.forEach(function (v, i) {
+            hist += (i ? " L" : "M") + xAt(i).toFixed(1) + " " + yAt(v).toFixed(1);
+        });
+        const projPath = "M" + xAt(vals.length - 1).toFixed(1) + " " + yAt(last).toFixed(1) + " L" + (W - PAD) + " " + yAt(proj).toFixed(1);
+        const cls = fc.direction === "up" ? "tr-up" : fc.direction === "down" ? "tr-down" : "tr-flat";
+        return (
+            '<svg class="mini-spark" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+            '<path class="trend-line ' + cls + '" d="' + hist + '" />' +
+            '<path class="trend-proj" d="' + projPath + '" />' +
+            "</svg>"
+        );
+    }
+
     function buysCardHTML(entry) {
         const card = entry.card;
         const result = entry.result;
@@ -883,7 +992,7 @@ case "offers":
             "</div>" +
             '<div class="set-name">' + card.set + ' · ' + card.setCode + " " + card.number + "</div>" +
             '<div class="buys-price">' + marketDual(rec.market) + (rec.finish === "Foil" ? ' <span class="foil-tag">Foil</span>' : "") + "</div>" +
-            '<div class="buys-forecast">' + forecastChip(card.slug) + "</div>" +
+            '<div class="buys-forecast">' + forecastChip(card.slug) + miniSparkline(card.slug) + "</div>" +
             '<div class="buys-reasons">' + result.reasons.map(function (r) {
                 return '<span class="buy-reason">' + escapeHTML(r) + "</span>";
             }).join("") + "</div>" +

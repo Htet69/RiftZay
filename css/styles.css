@@ -2194,10 +2194,6 @@ em {
 
 /* ================= PRICE FORECAST (prediction chips) ================= */
 
-.buys-forecast {
-    margin-bottom: 8px;
-}
-
 .card-forecast {
     margin: 6px 0 0;
 }
@@ -2233,4 +2229,118 @@ em {
     color: var(--text-muted);
     background: var(--bg-soft);
     border: 1px solid var(--border-strong);
+}
+
+/* ================= PRICE TREND (chart + why-buy) ================= */
+
+.trend-block {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.trend-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.trend-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.trend-chart {
+    width: 100%;
+    height: 88px;
+    display: block;
+}
+
+.mini-spark {
+    width: 84px;
+    height: 28px;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.trend-area {
+    fill: rgba(91, 155, 255, 0.08);
+}
+
+.trend-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.trend-line.tr-up {
+    stroke: var(--green);
+}
+
+.trend-line.tr-down {
+    stroke: var(--red);
+}
+
+.trend-line.tr-flat {
+    stroke: var(--text-muted);
+}
+
+.trend-proj {
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+    stroke-linecap: round;
+}
+
+.trend-dot {
+    fill: var(--accent);
+    stroke: var(--bg-card);
+    stroke-width: 1.5;
+}
+
+.trend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.trend-why {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.trend-why strong {
+    color: var(--green);
+}
+
+.trend-why .trend-conf {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.trend-empty {
+    padding: 14px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+}
+
+.buys-forecast {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
 }
