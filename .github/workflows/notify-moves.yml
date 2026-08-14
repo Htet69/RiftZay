@@ -1,0 +1,28 @@
+name: Notify price moves
+
+# Posts Discord alerts for cards whose market price moved >= 5% (or >= 2% if
+# in tools/watched.json) between daily snapshots. Runs after the collector.
+# Requires the DISCORD_WEBHOOK repository secret.
+
+on:
+  schedule:
+    - cron: '20 8 * * *'   # 08:20 UTC daily (collector runs 08:00)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Post price-move alerts
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: node tools/notify_moves.js

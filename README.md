@@ -47,9 +47,12 @@ RiftZay/
 │   ├── prices.js        (bundled snapshot of real TCGplayer market prices — fallback/offline)
 │   └── price_history.js (daily market-price snapshots for the forecast engine)
 ├── tools/
-│   └── collect_history.js (nightly collector that appends today's prices)
+│   ├── collect_history.js (nightly collector that appends today's prices)
+│   ├── notify_moves.js    (posts Discord price-move alerts)
+│   └── watched.json       (card slugs you want a heads-up on at a lower threshold)
 ├── .github/workflows/
-│   └── collect-history.yml (GitHub Action that runs the collector daily)
+│   ├── collect-history.yml (GitHub Action that runs the collector daily)
+│   └── notify-moves.yml    (GitHub Action that posts price-move alerts to Discord)
 └── js/
     ├── config.js
     ├── cards.js         (loader: fetches the freshest daily catalog snapshot)
@@ -80,6 +83,16 @@ Every card that TCGplayer sells now shows its **real market price** (near-mint a
 - A **"Store Prices Worldwide"** section shows the lowest in-stock offer across six markets (US, UK, Australia, New Zealand, Singapore, Canada), aggregated from local stores and eBay by [RiftCompare](https://riftcompare.com) — each in its native currency with an approximate MMK equivalent (rates in `FX_TO_USD` in `js/config.js`).
 - Sort by market price low→high / high→low in the browse view.
 - Cards TCGplayer doesn't list (some runes, tokens, judge promos) simply show no market price and fall back to community listings.
+
+## Price-move alerts to your phone (Discord)
+
+The `notify-moves` GitHub Action runs 20 minutes after each daily snapshot and posts to a **Discord webhook** whenever a card's market price moved a lot since yesterday — so you get a phone push (Discord app) without building anything. One-time setup:
+
+1. In Discord, open a server → channel → **Edit Channel → Integrations → Webhooks → New Webhook** → copy the webhook URL.
+2. On GitHub: **repo → Settings → Secrets and variables → Actions → New repository secret**, name it `DISCORD_WEBHOOK`, paste the URL.
+3. In `tools/watched.json`, add the slug of any card you want a *lower* 2% threshold on, e.g. `"sfd-227-star-221"` (you can find a slug in any card's URL). Everything else alerts at the default 5%.
+
+That's it — alerts start on the next daily run (or hit **Actions → Notify price moves → Run workflow** to test now). Each alert lists the biggest movers with name, new price, and the % change.
 
 ## Price-data note
 
