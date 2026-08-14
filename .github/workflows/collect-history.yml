@@ -1,7 +1,9 @@
 name: Collect daily price history
 
 # Snapshot TCGplayer market prices every day so the prediction engine has a
-# real time series to forecast from. Also runs on manual dispatch.
+# real time series to forecast from, plus the tournament metagame (which
+# cards are winning right now) from riftdecks.com. Also runs on manual
+# dispatch.
 
 on:
   schedule:
@@ -24,15 +26,18 @@ jobs:
       - name: Run history collector
         run: node tools/collect_history.js
 
+      - name: Run tournament metagame collector
+        run: node tools/collect_meta.js
+
       - name: Commit snapshot if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/price_history.js
+          git add data/price_history.js data/meta.js
           if git diff --cached --quiet; then
             echo "No price change today - nothing to commit."
           else
-            git commit -m "Collect daily price snapshot"
+            git commit -m "Collect daily price and metagame snapshot"
             git push origin main
             echo "Committed and pushed daily snapshot."
           fi

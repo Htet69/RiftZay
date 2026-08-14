@@ -228,6 +228,11 @@
         } else if (fc && !fc.ready) {
             reasons.push("Collecting price history - forecast arrives after " + window.RIFTZAY_PREDICT.MIN_DAYS + " days");
         }
+        if (fc && fc.meta && fc.meta.signal >= 0.3) {
+            reasons.push("Tournament winner - " + fc.meta.win + "% win rate" +
+                (fc.meta.play != null ? " in " + fc.meta.play + "% of decks" : "") +
+                (fc.meta.decks != null ? " (" + fc.meta.decks + " decks)" : ""));
+        }
         if (!reasons.length && record.market > 0) {
             reasons.push("Average value at this price - no standout discount");
         }

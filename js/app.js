@@ -856,6 +856,21 @@ case "offers":
             arrow + " " + pct + ' · ' + fc.confidence + '%</span>';
     }
 
+    /* Tournament metagame chip: win rate + play rate from riftdecks.com
+     * tournament results. Shown when a card has competitive data. */
+    function tournamentChip(slug) {
+        if (!window.RIFTZAY_PREDICT) return "";
+        const meta = window.RIFTZAY_PREDICT.meta(slug);
+        if (!meta || meta.win == null) return "";
+        const cls = meta.win >= 55 ? "meta-hot" : meta.win >= 48 ? "meta-ok" : "meta-cold";
+        const title = meta.name + " in tournaments: " + meta.win + "% win rate, " +
+            (meta.play != null ? meta.play + "% of decks, " : "") +
+            (meta.games != null ? meta.games + " games, " : "") +
+            (meta.decks != null ? meta.decks + " decks" : "");
+        return '<span class="pred-chip meta-chip ' + cls + (cls === "meta-ok" ? " pred-flat" : "") + '" title="' + escapeHTML(title) + '">' +
+            "🏆 " + meta.win + "% win</span>";
+    }
+
     /* Mini trend chart + "why buy/wait" explanation. Renders an SVG line of
      * the collected market history with a dashed 30-day projection, plus a
      * plain-language reason tied to the direction. */
@@ -884,6 +899,10 @@ case "offers":
             } else {
                 why = "The price has been <strong>stable</strong> over the collected window. With no clear move either way, the decision comes down to today's value signals.";
             }
+            if (fc.meta && fc.meta.signal >= 0.3) {
+                why += ' <span class="trend-meta">🏆 Hot in tournaments — ' + fc.meta.win + "% win rate" +
+                    (fc.meta.play != null ? ", " + fc.meta.play + "% of decks" : "") + " — tournament demand tends to push prices up.</span>";
+            }
             why += ' <span class="trend-conf">(confidence ' + fc.confidence + "%)</span>";
         }
 
@@ -891,6 +910,7 @@ case "offers":
             '<div class="trend-block">' +
             '<div class="trend-head">' +
             '<span class="trend-title">Price Trend</span>' +
+            tournamentChip(slug) +
             forecastChip(slug) +
             "</div>" +
             body +
