@@ -14,6 +14,9 @@
 </head>
 
 <body>
+    <!-- Toast notifications -->
+    <div id="toast" class="toast" hidden></div>
+
     <!-- ============ HEADER ============ -->
     <header class="site-header">
         <div class="container header-inner">
@@ -29,8 +32,27 @@
                     <li><a class="nav-link" data-nav="listings" href="#">Listings</a></li>
                 </ul>
             </nav>
+            <div class="header-actions">
+                <div class="mode-chip" id="mode-chip"></div>
+                <button id="auth-btn" class="btn btn-ghost btn-sm">
+                    <span id="auth-name">Sign in</span>
+                </button>
+                <input class="search-input" type="search" id="search-input" placeholder="Search cards..." hidden>
+                <button id="search-clear" class="btn btn-ghost btn-sm" hidden>×</button>
+                <select id="sort-select" class="sort-select" hidden>
+                    <option value="name">Sort by Name</option>
+                    <option value="price">Sort by Price</option>
+                    <option value="change">Sort by Change %</option>
+                </select>
+            </div>
         </div>
     </header>
+
+    <!-- Mode banner (for cloud/local mode indicator) -->
+    <div class="mode-banner" id="mode-banner">
+        <span class="mode-dot" id="mode-dot"></span>
+        <span class="mode-text" id="mode-text"></span>
+    </div>
 
     <!-- ============ HERO ============ -->
     <section class="hero">
@@ -39,8 +61,8 @@
                 <h1 class="hero-title">Riftbound TCG Price Guide</h1>
                 <p class="hero-sub">Search the full catalog, filter by set/rarity, and check reference prices.</p>
                 <div class="hero-actions">
-                    <input class="hero-search" type="search" placeholder="Search cards...">
-                    <button class="btn-primary">Search</button>
+                    <input class="hero-search" type="search" id="hero-search-input" placeholder="Search cards...">
+                    <button class="btn-primary" id="hero-search-btn">Search</button>
                 </div>
             </div>
         </div>
@@ -70,20 +92,42 @@
         </div>
     </section>
 
-    <!-- ============ CARD GRID ============ -->
-    <section class="section" id="section-home">
+    <!-- Filters -->
+    <div class="container filter-bar" id="filter-bar">
+        <select id="filter-rarity" class="filter-select">
+            <option value="">All Rarities</option>
+        </select>
+        <select id="filter-type" class="filter-select">
+            <option value="">All Types</option>
+        </select>
+        <button id="filter-reset" class="btn btn-ghost btn-sm">Clear Filters</button>
+    </div>
+
+    <!-- ============ VIEWS ============ -->
+    <!-- Home / Browse -->
+    <section class="view-section" id="view-home">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Featured Cards</h2>
-                <p class="section-sub">Popular cards from the Riftbound catalog.</p>
+                <p class="section-sub" id="home-sub">Popular cards from the Riftbound catalog.</p>
+                <button id="buy-cta" class="btn btn-primary buy-cta">See Buy Now Picks</button>
             </div>
             <div class="card-grid" id="card-grid"></div>
-            <div class="empty-state" id="empty-state">No cards found. <a href="#" id="search-input" class="search-link">Try a different search.</a></div>
+            <div class="empty-state" id="empty-state">No cards found.</div>
         </div>
     </section>
 
-    <!-- ============ BUY NOW ============ -->
-    <section class="section" id="section-buys">
+    <!-- Product Detail -->
+    <section class="view-section" id="view-product" hidden>
+        <div class="container" id="product-detail">
+            <div class="product-card" id="product-content">
+                <!-- content injected by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Buy Now -->
+    <section class="view-section" id="view-buys" hidden>
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Buy Now</h2>
@@ -94,7 +138,29 @@
         </div>
     </section>
 
-    <!-- ============ NAVIGATION ============ -->
+    <!-- Watchlist -->
+    <section class="view-section" id="view-watchlist" hidden>
+        <div class="container" id="watchlist-content">
+            <div class="section-header">
+                <h2 class="section-title">Watchlist</h2>
+            </div>
+            <div class="empty-state" id="watchlist-empty">Your watchlist is empty.</div>
+            <div id="watchlist-grid"></div>
+        </div>
+    </section>
+
+    <!-- Listings -->
+    <section class="view-section" id="view-listings" hidden>
+        <div class="container" id="listings-content">
+            <div class="section-header">
+                <h2 class="section-title">Listings</h2>
+            </div>
+            <div class="empty-state" id="listings-empty">No listings found.</div>
+            <div class="listings-list" id="listings-list"></div>
+        </div>
+    </section>
+
+    <!-- ============ NAVIGATION TRIGGER ============ -->
     <a class="main-nav-trigger" data-nav="main">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 12h18M3 6h6m6-6h3"/>
