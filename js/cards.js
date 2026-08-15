@@ -44,10 +44,15 @@
         }
     }
 
-    function fetchJSON(url) {
-        return fetch(url, { cache: "no-store" }).then(function (r) {
+    function fetchJSON(url, timeoutMs) {
+        var ms = timeoutMs || 15000;
+        var ctrl = new AbortController();
+        var timer = setTimeout(function () { ctrl.abort(); }, ms);
+        return fetch(url, { cache: "no-store", signal: ctrl.signal }).then(function (r) {
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();
+        }).finally(function () {
+            clearTimeout(timer);
         });
     }
 

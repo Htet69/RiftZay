@@ -1337,12 +1337,23 @@
                     }
                 });
             }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+            const vh = window.innerHeight || document.documentElement.clientHeight;
             els.forEach(function (el) {
-                if (!el.classList.contains("revealed")) obs.observe(el);
+                if (el.classList.contains("revealed")) return;
+                const rect = el.getBoundingClientRect();
+                if (rect.top < vh && rect.bottom > 0) {
+                    // already on screen: reveal now, don't wait for a scroll tick
+                    el.classList.add("revealed");
+                } else {
+                    obs.observe(el);
+                }
             });
         }
         window.RIFTZAY_REVEAL = scan;
         scan();
+        // Safety: re-scan once layout settles (webfont swap can shift sections
+        // below the fold; never leave in-viewport content stuck invisible).
+        setTimeout(scan, 1200);
     }
 
     /* Animated stat counters (Apple-style count up) */
