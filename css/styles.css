@@ -384,11 +384,6 @@ em {
     display: none;
 }
 
-.hero-suggest {
-    top: calc(100% + 8px);
-    max-height: 460px;
-}
-
 .suggest-group {
     padding: 10px 12px 4px;
     font-family: var(--mono);
@@ -698,45 +693,6 @@ em {
 .price-guide-note strong {
     color: var(--text);
     font-weight: 500;
-}
-
-.hero-search {
-    animation: fadeIn 0.6s ease 0.2s both;
-    position: relative;
-    max-width: 560px;
-    margin: 0 0 56px;
-}
-
-.hero-search .search-icon {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.hero-search input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 0.5px solid var(--border-strong);
-    color: var(--text);
-    padding: 10px 0 10px 32px;
-    border-radius: 0;
-    font-family: var(--mono);
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s ease;
-}
-
-.hero-search input::placeholder {
-    color: var(--text-dim);
-}
-
-.hero-search input:focus {
-    border-bottom-color: var(--text);
 }
 
 .hero-stats {

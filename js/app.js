@@ -529,8 +529,8 @@
         );
     }
 
-    function getSuggestBox(source) {
-        return source === "header" ? $("#search-suggest") : $("#hero-suggest");
+    function getSuggestBox() {
+        return $("#search-suggest");
     }
 
     function renderSuggestions(source, query) {
@@ -605,16 +605,13 @@
     function openCardFromSuggestion(source, slug) {
         closeSuggestions();
         $("#search-input").value = "";
-        $("#hero-search-input").value = "";
         $("#search-clear").hidden = true;
         showView("product", slug);
     }
 
     function closeSuggestions() {
-        ["search-suggest", "hero-suggest"].forEach(function (id) {
-            const el = $("#" + id);
-            if (el) el.hidden = true;
-        });
+        const el = $("#search-suggest");
+        if (el) el.hidden = true;
         suggestIndex = -1;
         suggestCards = [];
         suggestActiveSource = null;
@@ -1578,17 +1575,15 @@
                 const nav = this.getAttribute("data-nav");
                 if (nav === "home") {
                     $("#search-input").value = "";
-                    $("#hero-search-input").value = "";
                     $("#search-clear").hidden = true;
                 }
                 showView(nav);
             });
         });
 
-        // Search (header + hero, synced) — with TCGplayer-style suggestions
+        // Search — with TCGplayer-style suggestions
         function onSearch(value) {
             $("#search-input").value = value;
-            $("#hero-search-input").value = value;
             $("#search-clear").hidden = !value;
             currentPage = 1;
             showView("home");
@@ -1604,9 +1599,6 @@
         $("#search-input").addEventListener("input", function () {
             onSearchInput("header", this.value);
         });
-        $("#hero-search-input").addEventListener("input", function () {
-            onSearchInput("hero", this.value);
-        });
         $("#search-clear").addEventListener("click", function () {
             closeSuggestions();
             onSearch("");
@@ -1615,9 +1607,6 @@
         // TCGplayer-style suggestion keyboard navigation
         $("#search-input").addEventListener("keydown", function (e) {
             handleSearchKeydown("header", e);
-        });
-        $("#hero-search-input").addEventListener("keydown", function (e) {
-            handleSearchKeydown("hero", e);
         });
 
         // Sort
@@ -1742,18 +1731,16 @@
             }
         });
 
-        // Close suggestions when clicking outside a search box
+        // Close suggestions when clicking outside the search box
         document.addEventListener("click", function (e) {
-            if (!e.target.closest(".header-search") && !e.target.closest(".hero-search")) {
+            if (!e.target.closest(".header-search")) {
                 closeSuggestions();
             }
         });
 
-        // Close suggestions when a search box loses focus
-        ["search-input", "hero-search-input"].forEach(function (id) {
-            $("#" + id).addEventListener("blur", function () {
-                setTimeout(closeSuggestions, 120);
-            });
+        // Close suggestions when the search box loses focus
+        $("#search-input").addEventListener("blur", function () {
+            setTimeout(closeSuggestions, 120);
         });
 
     }
