@@ -7,6 +7,21 @@
         return document.querySelector(sel);
     };
 
+    /* Card art sometimes fails to load on the first try (transient CDN
+     * hiccup) even though the URL is valid - retry once before giving up
+     * and showing the placeholder. Exposed on window so inline onerror=""
+     * attributes (which run in global scope) can reach it. */
+    window.riftzayImgRetry = function (img) {
+        if (img.dataset.retried) {
+            img.style.display = "none";
+            return;
+        }
+        img.dataset.retried = "1";
+        const src = img.getAttribute("src");
+        img.removeAttribute("src");
+        setTimeout(function () { img.setAttribute("src", src); }, 500);
+    };
+
     const API = window.RIFTZAY_API;
 
     // Populated from js/cards.js once the real catalog has loaded (see init)
@@ -303,7 +318,7 @@
             (watched ? "Remove from watchlist" : "Add to watchlist") + '">' +
             (watched ? "★" : "☆") + "</button>" +
             '<div class="tcg-thumb">' +
-            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="riftzayImgRetry(this)">' +
             '<div class="tcg-thumb-fallback"></div>' +
             "</div>" +
             '<div class="tcg-card-header">' +
@@ -501,7 +516,7 @@
         return (
             '<div class="suggest-item' + (isActive ? " active" : "") + '" data-suggest-card="' + card.slug + '">' +
             '<div class="suggest-art">' +
-            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="" onerror="this.style.display=\'none\'">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="" onerror="riftzayImgRetry(this)">' +
             '<span class="suggest-art-fallback"></span>' +
             "</div>" +
             '<div class="suggest-info">' +
@@ -768,7 +783,7 @@
             '<div class="card-art-frame">' +
             '<div class="card-art-holder">' +
             '<div class="art-fallback"></div>' +
-            '<img class="card-art-img" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<img class="card-art-img" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="riftzayImgRetry(this)">' +
             "</div>" +
             '<div class="art-meta">' +
             '<div class="art-number">' + card.setCode + " " + card.number + "</div>" +
@@ -1013,7 +1028,7 @@
             '<span class="buys-score-num">' + result.score + "</span>" +
             "</div>" +
             '<div class="buys-thumb">' +
-            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="riftzayImgRetry(this)">' +
             '<div class="tcg-thumb-fallback"></div>' +
             "</div>" +
             '<div class="buys-info">' +
@@ -1045,7 +1060,7 @@
         return (
             '<a class="trend-pick" data-detail="' + card.slug + '">' +
             '<div class="trend-pick-thumb">' +
-            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="this.style.display=\'none\'">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="riftzayImgRetry(this)">' +
             '<div class="tcg-thumb-fallback"></div>' +
             "</div>" +
             '<div class="trend-pick-name">' + escapeHTML(card.name) + "</div>" +
@@ -1111,8 +1126,11 @@
         ring.setAttribute("stroke-dasharray", "100");
         ring.setAttribute("stroke-dashoffset", String(100 - result.score));
         $("#top-pick-score").textContent = result.score;
-        $("#top-pick-thumb").src = card.art;
-        $("#top-pick-thumb").alt = card.name;
+        const topThumb = $("#top-pick-thumb");
+        topThumb.removeAttribute("data-retried");
+        topThumb.onerror = function () { riftzayImgRetry(this); };
+        topThumb.src = card.art;
+        topThumb.alt = card.name;
         const nameEl = $("#top-pick-name");
         nameEl.textContent = card.name;
         nameEl.setAttribute("data-detail", card.slug);

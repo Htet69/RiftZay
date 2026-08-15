@@ -67,12 +67,13 @@
     --red-bg: rgba(255, 90, 30, 0.14);
     --green-bg: rgba(95, 224, 160, 0.12);
 
-    /* Type */
+    /* Type - monospace retired in favor of the sans family everywhere
+     * (kept as a distinct token so a future component can still opt in). */
     --font-sans: "ABCWalterNeue", "ABC Walter Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-mono: "InputMono", "Input Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
     --display: var(--font-sans);
     --sans: var(--font-sans);
-    --mono: var(--font-mono);
+    --mono: var(--font-sans);
 
     --fw-bld: 740;
     --fw-med: 560;
@@ -144,20 +145,14 @@ h3,
     letter-spacing: -0.02em;
 }
 
-/* MAD signature: mono micro-labels with the Γû₧ (U+259E) prefix */
+/* Quiet eyebrow label above section titles */
 .kicker {
-    font-family: var(--mono);
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 14px;
-}
-
-.kicker::before {
-    content: "\259e  ";
-    color: var(--grey-1000);
+    color: var(--text-dim);
+    margin-bottom: 10px;
 }
 
 /* ================= MOTION ================= */
@@ -304,7 +299,6 @@ em {
     font-weight: var(--fw-bld);
     font-size: 22px;
     letter-spacing: -0.02em;
-    text-transform: uppercase;
     color: var(--text);
 }
 
@@ -399,13 +393,8 @@ em {
     padding: 10px 12px 4px;
     font-family: var(--mono);
     font-size: 11px;
-    text-transform: uppercase;
     letter-spacing: 0.02em;
     color: var(--text-muted);
-}
-
-.suggest-group::before {
-    content: "\259e  ";
 }
 
 .suggest-item {
@@ -481,7 +470,6 @@ em {
 .suggest-price .sp-label {
     font-family: var(--mono);
     font-size: 10px;
-    text-transform: uppercase;
     color: var(--text-muted);
 }
 
@@ -495,7 +483,6 @@ em {
 .suggest-rarity {
     font-family: var(--mono);
     font-size: 10px;
-    text-transform: uppercase;
     letter-spacing: 0.02em;
     color: var(--text-muted);
     display: inline-block;
@@ -519,7 +506,6 @@ em {
     font-weight: 500;
     text-align: center;
     cursor: pointer;
-    text-transform: uppercase;
 }
 
 .suggest-footer:hover {
@@ -540,7 +526,6 @@ em {
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     padding: 7px 14px;
     border-radius: 4px;
     transition: color 0.15s ease, background-color 0.15s ease;
@@ -569,7 +554,6 @@ em {
     font-size: 12px;
     font-weight: 500;
     white-space: nowrap;
-    text-transform: uppercase;
 }
 
 /* ================= BUTTONS (MAD translucent grey pill) ================= */
@@ -585,7 +569,6 @@ em {
     font-weight: 500;
     font-size: 12px;
     letter-spacing: 0;
-    text-transform: uppercase;
     text-decoration: none;
     line-height: 1;
     color: var(--grey-1000);
@@ -780,7 +763,6 @@ em {
     font-family: var(--mono);
     font-size: 11px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
 }
 
 .data-credibility {
@@ -822,13 +804,7 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text-muted);
-}
-
-.data-source-info strong::before {
-    content: "\259e  ";
-    color: var(--grey-1000);
 }
 
 .data-source-info span {
@@ -862,11 +838,6 @@ em {
     letter-spacing: 0.02em;
     color: var(--green);
     margin-bottom: 14px;
-    text-transform: uppercase;
-}
-
-.top-pick-badge::before {
-    content: "\259e  ";
 }
 
 .top-pick-body {
@@ -916,7 +887,6 @@ em {
     font-size: 12px;
     color: var(--text-muted);
     margin-top: 2px;
-    text-transform: uppercase;
 }
 
 .top-pick-reason {
@@ -1054,7 +1024,6 @@ em {
     color: var(--text-muted);
     margin: 3px 0 8px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
 }
 
 .trend-pick-stats {
@@ -1069,7 +1038,6 @@ em {
     font-weight: 500;
     letter-spacing: 0.02em;
     color: var(--green);
-    text-transform: uppercase;
 }
 
 .trend-pick-play {
@@ -1167,14 +1135,14 @@ em {
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap: 16px;
+    gap: 22px;
 }
 
 .tcg-card {
     background: var(--bg-alt);
     border: 0.5px solid var(--border);
     border-radius: 12px;
-    padding: 16px;
+    padding: 18px;
     transition: border-color 0.2s ease;
     position: relative;
     display: flex;
@@ -1250,14 +1218,8 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text);
     margin-bottom: 10px;
-}
-
-.card-type::before {
-    content: "\259e  ";
-    color: var(--orange);
 }
 
 .champ-tag {
@@ -1267,7 +1229,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--violet);
     vertical-align: middle;
 }
@@ -1277,7 +1238,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     white-space: nowrap;
 }
 
@@ -1305,12 +1265,7 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text-muted);
-}
-
-.market-strip .strip-label::before {
-    content: "\259e  ";
 }
 
 .market-strip .strip-price {
@@ -1332,7 +1287,6 @@ em {
     font-size: 10px;
     color: var(--text-muted);
     margin-left: auto;
-    text-transform: uppercase;
 }
 
 .community-strip {
@@ -1353,7 +1307,6 @@ em {
     font-family: var(--mono);
     font-size: 10px;
     color: var(--text-muted);
-    text-transform: uppercase;
 }
 
 .card-header-side {
@@ -1376,7 +1329,6 @@ em {
     font-family: var(--mono);
     font-size: 11px;
     color: var(--text-muted);
-    text-transform: uppercase;
 }
 
 .best-deal strong {
@@ -1389,7 +1341,6 @@ em {
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text);
     cursor: pointer;
     white-space: nowrap;
@@ -1434,7 +1385,6 @@ em {
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    text-transform: uppercase;
     transition: border-color 0.2s, color 0.2s, background-color 0.2s;
 }
 
@@ -1499,7 +1449,6 @@ em {
     font-family: var(--mono);
     font-size: 11px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text-muted);
 }
 
@@ -1577,7 +1526,6 @@ em {
 .art-meta .art-set {
     margin-top: 2px;
     font-size: 11px;
-    text-transform: uppercase;
 }
 
 .art-meta .art-type {
@@ -1585,14 +1533,8 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text);
     display: inline-block;
-}
-
-.art-meta .art-type::before {
-    content: "\259e  ";
-    color: var(--orange);
 }
 
 .product-info h1 {
@@ -1642,7 +1584,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text-muted);
     margin-bottom: 8px;
 }
@@ -1751,7 +1692,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     border-radius: 2px;
     padding: 2px 8px;
     margin-left: 8px;
@@ -1790,13 +1730,8 @@ em {
     font-family: var(--mono);
     font-size: 11px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text-muted);
     margin-bottom: 8px;
-}
-
-.product-flavor .flavor-label::before {
-    content: "\259e  ";
 }
 
 .product-flavor .flavor-text {
@@ -1909,7 +1844,6 @@ em {
     cursor: pointer;
     padding: 0;
     margin-left: 4px;
-    text-transform: uppercase;
 }
 
 .link-btn:hover {
@@ -1928,7 +1862,6 @@ em {
     font-family: var(--mono);
     font-size: 10px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     margin-bottom: 8px;
     font-weight: 500;
 }
@@ -2031,7 +1964,6 @@ em {
     font-family: var(--mono);
     font-size: 12px;
     font-weight: 500;
-    text-transform: uppercase;
     animation: toastIn 0.25s ease;
     max-width: 90%;
     text-align: center;
@@ -2088,7 +2020,6 @@ em {
     font-family: var(--mono);
     font-size: 10px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
 }
 
 .mode-chip.cloud {
@@ -2136,7 +2067,6 @@ em {
     padding: 1px 8px;
     margin-left: 8px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     border-radius: 2px;
 }
 
@@ -2193,7 +2123,6 @@ em {
     font-family: var(--mono);
     font-size: 10px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
 }
 
 .seller-listing-price {
@@ -2208,7 +2137,6 @@ em {
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--orange);
     vertical-align: middle;
 }
@@ -2234,7 +2162,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text-muted);
 }
 
@@ -2339,7 +2266,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--violet);
     vertical-align: 2px;
 }
@@ -2368,7 +2294,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
 }
 
 .tier-now {
@@ -2389,7 +2314,6 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -2506,7 +2430,6 @@ em {
     font-size: 10px;
     color: var(--text-muted);
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     margin-top: 4px;
 }
 
@@ -2626,15 +2549,10 @@ em {
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--text);
     padding: 10px 0 6px;
 }
 
-.pg-cond-head::before {
-    content: "\259e  ";
-    color: var(--orange);
-}
 
 .pg-cond-row {
     padding: 8px 0;
@@ -2663,7 +2581,6 @@ em {
     font-family: var(--mono);
     font-size: 10px;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
     color: var(--orange);
     vertical-align: 2px;
 }
