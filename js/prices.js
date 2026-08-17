@@ -171,6 +171,22 @@
                 applyMarketsFromBundle(result.prices);
             }
 
+            // 1b) Fresh bundled snapshot (rebuilt nightly by the collect
+            // workflow). Prefer it over the live API when it's recent so we
+            // don't depend on the Open TCG API being reachable from this
+            // visitor's network (some ISPs/regions get Cloudflare-blocked).
+            if (!result) {
+                var bundledUpdated = window.RIFTZAY_PRICE_UPDATED ?
+                    Date.parse(window.RIFTZAY_PRICE_UPDATED) : 0;
+                if (bundledUpdated && Date.now() - bundledUpdated < 40 * 60 * 60 * 1000) {
+                    result = {
+                        ts: bundledUpdated,
+                        updated: window.RIFTZAY_PRICE_UPDATED,
+                        prices: window.RIFTZAY_PRICES_BUNDLE || {},
+                    };
+                }
+            }
+
             // 2) Live pricing from the Open TCG API (refreshed nightly)
             if (!result) {
                 var bySet = {};

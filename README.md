@@ -50,6 +50,7 @@ RiftZay/
 â”œâ”€â”€ tools/
 â”‚   â”œâ”€â”€ collect_history.js (nightly collector that appends today's prices)
 â”‚   â”œâ”€â”€ collect_meta.js    (nightly collector that fetches tournament metagame)
+â”‚   â”œâ”€â”€ generate-prices.js (rebuilds the fallback price bundle so offline visitors get fresh prices daily)
 â”‚   â”œâ”€â”€ notify_moves.js    (posts Discord price-move alerts)
 â”‚   â””â”€â”€ watched.json       (card slugs you want a heads-up on at a lower threshold)
 â”œâ”€â”€ .github/workflows/
