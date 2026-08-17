@@ -105,6 +105,17 @@
         window.RIFTZAY_SETS = sets;
     }
 
+    /* Refresh the network copy in the background so the next visit is
+     * instant, without blocking first paint on the live mirror. */
+    function refreshInBackground() {
+        fetchJSON(HF_URL).then(function (live) {
+            if (!Array.isArray(live) || !live.length) return;
+            writeLS(LS_KEY, { ts: Date.now(), cards: live });
+        }).catch(function () {
+            /* keep whatever snapshot we have; not worth a retry */
+        });
+    }
+
     window.RIFTZAY_CARDS_READY = (function () {
         return (async function () {
             var raw = null;
@@ -116,19 +127,25 @@
                 raw = cached.cards;
             }
 
-            // 2) Live snapshot from the Hugging Face mirror (updates daily)
+            // 1b) Bundled snapshot shipped with the site. Prefer it for the
+            // first paint so cards never wait on the live mirror; refresh
+            // the network copy in the background for next visit.
+            if (!raw) {
+                var bundle = window.RIFTZAY_CARDS_BUNDLE;
+                if (Array.isArray(bundle) && bundle.length) {
+                    raw = bundle;
+                    refreshInBackground();
+                }
+            }
+
+            // 2) Live snapshot from the Hugging Face mirror (updates daily).
+            // Only reached when we have neither a fresh cache nor a bundle.
             if (!raw) {
                 try {
                     raw = await fetchJSON(HF_URL);
                 } catch (e) {
                     raw = null;
                 }
-            }
-
-            // 3) Bundled snapshot shipped with the site
-            if (!raw) {
-                var bundle = window.RIFTZAY_CARDS_BUNDLE;
-                if (Array.isArray(bundle) && bundle.length) raw = bundle;
             }
 
             if (!raw || !raw.length) {

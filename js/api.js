@@ -50,49 +50,114 @@
     }
 
     let supabase = null;
-    if (HAS_SUPABASE) {
+    let cloudDown = false; // circuit breaker: stop calling Supabase once it fails
+
+    function getClient() {
+        if (supabase || !HAS_SUPABASE) return supabase;
         supabase = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+        return supabase;
+    }
+
+    function markCloudDown() {
+        if (cloudDown) return;
+        cloudDown = true;
+        if (supabase) {
+            try { supabase.removeAllChannels(); } catch (e) { /* ignore */ }
+        }
+    }
+
+    function cloudMode() {
+        return HAS_SUPABASE && !cloudDown;
+    }
+
+    function localSession() {
+        return readLS(LS_KEYS.session, null);
+    }
+
+    /* One fast connectivity check before touching the Supabase client, so an
+     * unreachable host or missing table never spins up the realtime websocket
+     * and its retry spam. Probes the actual listings table so a missing table
+     * (404) or network failure (QUIC) both trip the breaker -> local mode. */
+    async function probeCloud() {
+        if (!HAS_SUPABASE || cloudDown) return;
+        var ctrl = new AbortController();
+        var timer = setTimeout(function () { ctrl.abort(); }, 4000);
+        try {
+            var r = await fetch(
+                CFG.SUPABASE_URL + "/rest/v1/listings?select=*&limit=1",
+                {
+                    method: "GET",
+                    headers: {
+                        "apikey": CFG.SUPABASE_ANON_KEY,
+                        "Authorization": "Bearer " + CFG.SUPABASE_ANON_KEY,
+                    },
+                    cache: "no-store",
+                    signal: ctrl.signal,
+                }
+            );
+            if (!r.ok) throw new Error("HTTP " + r.status);
+        } catch (e) {
+            markCloudDown();
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     const API = {
 
         mode: function () {
-            return HAS_SUPABASE ? "cloud" : "local";
+            return cloudMode() ? "cloud" : "local";
         },
+
+        isCloudDown: function () {
+            return cloudDown;
+        },
+
+        probeCloud: probeCloud,
 
         /* ---------- AUTH ---------- */
 
         getSession: async function () {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase.auth.getSession();
-                if (error || !data.session) return null;
-                return {
-                    id: data.session.user.id,
-                    email: data.session.user.email,
-                    username: data.session.user.user_metadata?.username || data.session.user.email,
-                };
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient().auth.getSession();
+                    if (error) throw error;
+                    if (!data.session) return null;
+                    return {
+                        id: data.session.user.id,
+                        email: data.session.user.email,
+                        username: data.session.user.user_metadata?.username || data.session.user.email,
+                    };
+                } catch (e) {
+                    markCloudDown();
+                }
             }
-            return readLS(LS_KEYS.session, null);
+            return localSession();
         },
 
         register: async function (email, password, username) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        data: { username: username || email.split("@")[0] },
-                    },
-                });
-                if (error) throw new Error(error.message);
-                if (!data.session) {
-                    throw new Error("Account created! Check your email to confirm before signing in.");
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient().auth.signUp({
+                        email: email,
+                        password: password,
+                        options: {
+                            data: { username: username || email.split("@")[0] },
+                        },
+                    });
+                    if (error) throw new Error(error.message);
+                    if (!data.session) {
+                        throw new Error("Account created! Check your email to confirm before signing in.");
+                    }
+                    return {
+                        id: data.session.user.id,
+                        email: data.session.user.email,
+                        username: data.session.user.user_metadata?.username || email.split("@")[0],
+                    };
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
+                    throw e;
                 }
-                return {
-                    id: data.session.user.id,
-                    email: data.session.user.email,
-                    username: data.session.user.user_metadata?.username || email.split("@")[0],
-                };
             }
 
             /* Local mode */
@@ -114,17 +179,22 @@
         },
 
         login: async function (email, password) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
-                if (error) throw new Error(error.message || "Invalid credentials.");
-                return {
-                    id: data.session.user.id,
-                    email: data.session.user.email,
-                    username: data.session.user.user_metadata?.username || email.split("@")[0],
-                };
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient().auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+                    if (error) throw new Error(error.message || "Invalid credentials.");
+                    return {
+                        id: data.session.user.id,
+                        email: data.session.user.email,
+                        username: data.session.user.user_metadata?.username || email.split("@")[0],
+                    };
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
+                    throw e;
+                }
             }
 
             /* Local mode */
@@ -138,9 +208,9 @@
             return session;
         },
 
-        logout: async function () {
-            if (HAS_SUPABASE) {
-                await supabase.auth.signOut();
+logout: async function () {
+            if (cloudMode()) {
+                try { await getClient().auth.signOut(); } catch (e) { /* ignore */ }
             }
             localStorage.removeItem(LS_KEYS.session);
         },
@@ -148,13 +218,17 @@
         /* ---------- WATCHLIST ---------- */
 
         getWatchlist: async function (userId) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("watchlist")
-                    .select("card_slug")
-                    .eq("user_id", userId);
-                if (error) throw new Error(error.message);
-                return (data || []).map(function (row) { return row.card_slug; });
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient()
+                        .from("watchlist")
+                        .select("card_slug")
+                        .eq("user_id", userId);
+                    if (error) throw new Error(error.message);
+                    return (data || []).map(function (row) { return row.card_slug; });
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
+                }
             }
 
             const map = readLS(LS_KEYS.watchlist, {}) || {};
@@ -162,23 +236,28 @@
         },
 
         toggleWatch: async function (userId, cardSlug) {
-            if (HAS_SUPABASE) {
+            if (cloudMode()) {
                 const current = await API.getWatchlist(userId);
-                const exists = current.indexOf(cardSlug) !== -1;
-                if (exists) {
-                    const { error } = await supabase
+                try {
+                    const exists = current.indexOf(cardSlug) !== -1;
+                    const client = getClient();
+                    if (exists) {
+                        const { error } = await client
+                            .from("watchlist")
+                            .delete()
+                            .eq("user_id", userId)
+                            .eq("card_slug", cardSlug);
+                        if (error) throw new Error(error.message);
+                        return false;
+                    }
+                    const { error } = await client
                         .from("watchlist")
-                        .delete()
-                        .eq("user_id", userId)
-                        .eq("card_slug", cardSlug);
+                        .insert([{ user_id: userId, card_slug: cardSlug }]);
                     if (error) throw new Error(error.message);
-                    return false;
+                    return true;
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
                 }
-                const { error } = await supabase
-                    .from("watchlist")
-                    .insert([{ user_id: userId, card_slug: cardSlug }]);
-                if (error) throw new Error(error.message);
-                return true;
             }
 
             const map = readLS(LS_KEYS.watchlist, {}) || {};
@@ -199,16 +278,20 @@
 
         /* ---------- COMMUNITY LISTINGS ---------- */
 
-        getListings: async function (cardSlug) {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .select("*")
-                    .eq("card_slug", cardSlug)
-                    .gt("quantity", 0)
-                    .order("price_mmk", { ascending: true });
-                if (error) throw new Error(error.message);
-                return data || [];
+getListings: async function (cardSlug) {
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient()
+                        .from("listings")
+                        .select("*")
+                        .eq("card_slug", cardSlug)
+                        .gt("quantity", 0)
+                        .order("price_mmk", { ascending: true });
+                    if (error) throw new Error(error.message);
+                    return data || [];
+                } catch (e) {
+                    markCloudDown();
+                }
             }
             return readLS(LS_KEYS.listings, [])
                 .filter(function (listing) {
@@ -218,14 +301,18 @@
         },
 
         getAllListings: async function () {
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .select("*")
-                    .gt("quantity", 0)
-                    .order("created_at", { ascending: false });
-                if (error) throw new Error(error.message);
-                return data || [];
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient()
+                        .from("listings")
+                        .select("*")
+                        .gt("quantity", 0)
+                        .order("created_at", { ascending: false });
+                    if (error) throw new Error(error.message);
+                    return data || [];
+                } catch (e) {
+                    markCloudDown();
+                }
             }
             return readLS(LS_KEYS.listings, []).filter(function (listing) {
                 return listing.quantity > 0;
@@ -245,14 +332,19 @@
                 contact: values.contact,
             };
 
-            if (HAS_SUPABASE) {
-                const { data, error } = await supabase
-                    .from("listings")
-                    .insert([listing])
-                    .select()
-                    .single();
-                if (error) throw new Error(error.message);
-                return data;
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient()
+                        .from("listings")
+                        .insert([listing])
+                        .select()
+                        .single();
+                    if (error) throw new Error(error.message);
+                    return data;
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
+                    throw e;
+                }
             }
 
             listing.id = uid();
@@ -264,14 +356,19 @@
         },
 
         deleteListing: async function (userId, listingId) {
-            if (HAS_SUPABASE) {
-                const { error } = await supabase
-                    .from("listings")
-                    .delete()
-                    .eq("id", listingId)
-                    .eq("seller_id", userId);
-                if (error) throw new Error(error.message);
-                return;
+            if (cloudMode()) {
+                try {
+                    const { error } = await getClient()
+                        .from("listings")
+                        .delete()
+                        .eq("id", listingId)
+                        .eq("seller_id", userId);
+                    if (error) throw new Error(error.message);
+                    return;
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
+                    throw e;
+                }
             }
 
             const listings = readLS(LS_KEYS.listings, []);
@@ -281,12 +378,16 @@
         },
 
         subscribeListings: function (onChange) {
-            if (!HAS_SUPABASE) return function () {};
-            const channel = supabase
-                .channel("riftzay-listings")
-                .on("postgres_changes", { event: "*", schema: "public", table: "listings" }, onChange)
-                .subscribe();
-            return function () { supabase.removeChannel(channel); };
+            if (!cloudMode()) return function () {};
+            try {
+                const channel = getClient()
+                    .channel("riftzay-listings")
+                    .on("postgres_changes", { event: "*", schema: "public", table: "listings" }, onChange)
+                    .subscribe();
+                return function () { supabase.removeChannel(channel); };
+            } catch (e) {
+                return function () {};
+            }
         },
     };
 

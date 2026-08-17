@@ -1498,10 +1498,65 @@
             .map(function (t) { return '<option value="' + t + '">' + t + "</option>"; }).join("");
     }
 
+    function withTimeout(promise, ms, fallback) {
+        return Promise.race([
+            Promise.resolve(promise),
+            new Promise(function (resolve) {
+                setTimeout(function () { resolve(fallback); }, ms);
+            }),
+        ]);
+    }
+
+    /* Load session/watchlist/listings in the background, after the cards
+     * have already been painted. A slow or unreachable Supabase should
+     * degrade gracefully instead of blocking the site. */
+    async function loadCloudData() {
+        await API.probeCloud();
+        if (API.mode() !== "cloud") {
+            updateModeBanner();
+            updateModeChip();
+            updateStats();
+            return;
+        }
+        try {
+            currentUser = await withTimeout(API.getSession(), 6000, null);
+        } catch (e) {
+            currentUser = null;
+        }
+        if (currentUser) {
+            try {
+                myWatchlist = await withTimeout(API.getWatchlist(currentUser.id), 6000, []);
+            } catch (e) {
+                myWatchlist = [];
+            }
+        }
+        try {
+            await withTimeout(refreshListings(), 8000, null);
+        } catch (e) {
+            allListings = [];
+        }
+        if (API.mode() === "cloud") {
+            API.subscribeListings(async function () {
+                try {
+                    await refreshListings();
+                    renderCards($("#search-input").value, $("#sort-select").value);
+                    if (!$("#view-product").hidden && currentSlug) openProduct(currentSlug);
+                    if (!$("#view-listings").hidden) renderMyListings();
+                } catch (e) {
+                    console.warn("Could not refresh listings", e);
+                }
+            });
+        }
+        updateAuthUI();
+        updateStats();
+        updateDataSources();
+        updateModeChip();
+        checkBuyAlerts();
+    }
+
     async function init() {
         updateModeBanner();
         updateModeChip();
-
         // Load the real Riftbound catalog (bundled snapshot -> daily live mirror)
         try {
             await window.RIFTZAY_CARDS_READY;
@@ -1529,35 +1584,16 @@
         updateDataSources();
         initCardTilt();
 
-        // Restore session
-        try {
-            currentUser = await API.getSession();
-        } catch (e) {
-            currentUser = null;
-        }
-        if (currentUser) {
-            try {
-                myWatchlist = await API.getWatchlist(currentUser.id);
-            } catch (e) {
-                myWatchlist = [];
-            }
-        }
-        try {
-            await refreshListings();
-        } catch (e) {
-            allListings = [];
-            showToast("Listings could not be loaded: " + e.message, "error");
-        }
-        updateAuthUI();
-        updateStats();
-        updateDataSources();
-        checkBuyAlerts();
-
-        // Initial render
+        // Initial render first, so cards appear instantly even if the
+        // listings backend (Supabase) is slow or unreachable.
         renderCards("", "name");
         renderTopPick();
         renderTrending();
         initScrollReveal();
+
+        // Then load session/watchlist/listings in the background so a slow
+        // or blocked Supabase never delays first paint.
+        setTimeout(function () { loadCloudData(); }, 0);
 
         // Apple-style header: adds subtle elevation + border after scrolling
         function onHeaderScroll() {
@@ -1679,17 +1715,6 @@
             $("#listing-usd-hint").textContent = v > 0
                 ? "≈ " + fmtUSD(v) + " USD"
                 : "";
-        });
-
-        API.subscribeListings(async function () {
-            try {
-                await refreshListings();
-                renderCards($("#search-input").value, $("#sort-select").value);
-                if (!$("#view-product").hidden && currentSlug) openProduct(currentSlug);
-                if (!$("#view-listings").hidden) renderMyListings();
-            } catch (e) {
-                console.warn("Could not refresh listings", e);
-            }
         });
 
         // Delegated: card detail (product page), watch, suggestions
