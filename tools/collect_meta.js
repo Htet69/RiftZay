@@ -1,34 +1,23 @@
 /* RiftZay - tournament metagame collector
  *
- * Fetches the competitive card-stats dataset from riftdecks.com (the
- * community-run Riftbound tournament database: ~2000 events, decklists, and
- * standings) and writes a compact per-card metagame snapshot to
- * data/meta.js. The prediction engine uses this as a leading indicator:
- * cards that show up in winning tournament decks tend to move in price
- * before the TCGplayer market catches up.
+ * Fetches the competitive card-stats dataset and writes a compact per-card
+ * metagame snapshot to data/meta.js. The prediction engine uses this as a
+ * leading indicator: cards that show up in winning tournament decks tend to
+ * move in price before the TCGplayer market catches up.
  *
- * Source: https://riftdecks.com/cards/stats - the page embeds a JSON array
- * (var DATA = [...]) with per-card tournament stats. Each row has an image
- * path like /img/cards/riftbound//OGN/ogn-045-298_cropped.png whose filename
- * (ogn-045-298) is exactly a RiftZay card slug, so we can join directly to
- * the price data.
- *
- * The page sits behind Cloudflare bot protection, so it is fetched with
- * curl (installed on GitHub Actions ubuntu runners and Windows 10+) using a
- * browser User-Agent; Node's default HTTP fingerprint is rejected.
- *
- * IMPORTANT - best effort: if the source is unreachable (e.g. from a
- * datacenter IP that Cloudflare blocks), the existing data/meta.js is left
- * untouched rather than overwritten, so the job never fails and the
- * prediction engine keeps using the last known-good snapshot. Run locally
- * (node tools/collect_meta.js) to refresh whenever the network can reach it.
+ * Source: BoundRift (https://boundrift.com/api/stats/cards) - a community
+ * Riftbound tournament database that publishes per-card stats (deck count,
+ * play rate, win rate, games) keyed by the exact RiftZay card slug, so we
+ * can join directly to the price data. The previous source (riftdecks.com)
+ * sits behind Cloudflare bot protection that blocks automated access, so
+ * this collector was switched to BoundRift's open JSON API.
  *
  * Runs nightly with the price collector. Can be run locally:
  *   node tools/collect_meta.js
  *
  * Data layout:
  *   window.RIFTZAY_TOURNAMENT_META = {
- *     "updated": "2026-08-14",
+ *     "updated": "2026-08-17",
  *     "cards": { "ogn-045-298": { "name": "...", "decks": 1015, "copies": 3,
  *       "play": 39, "games": 2346, "win": 50 } }
  *   };
@@ -39,73 +28,84 @@
  *   - win    % win rate of decks running the card
  */
 
-const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const META_FILE = path.join(ROOT, 'data', 'meta.js');
+const CARDS_FILE = path.join(ROOT, 'data', 'cards.js');
 
-const URL = 'https://riftdecks.com/cards/stats';
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+const URL = 'https://boundrift.com/api/stats/cards';
 
 function todayStr() {
     return new Date().toISOString().slice(0, 10);
 }
 
-function fetchHtml() {
-    // curl with a browser UA (Node's fingerprint is blocked by Cloudflare).
+async function fetchJson(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(url + ' -> HTTP ' + r.status);
+    return r.json();
+}
+
+/* Card name lookup: the card catalog (data/cards.js) uses cardCode as the
+ * slug, exactly the same format BoundRift's cardId uses. */
+function loadNames() {
+    const names = {};
     try {
-        return execFileSync('curl', ['-s', '-A', UA, '--max-time', '60', URL], {
-            encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'],
-        });
+        const src = fs.readFileSync(CARDS_FILE, 'utf8');
+        const m = src.match(/window\.RIFTZAY_CARDS_BUNDLE\s*=\s*(\[.*?\]);/s);
+        if (!m) return names;
+        const cards = JSON.parse(m[1]);
+        for (const c of cards) {
+            if (c && c.cardCode) names[c.cardCode] = c.fullName || c.name;
+        }
     } catch (e) {
-        console.log('curl failed:', (e.message || '').split('\n')[0]);
-        return null;
+        console.log('could not read card catalog names:', e.message);
     }
+    return names;
 }
 
-function extractData(html) {
-    if (!html || html.length < 1000) return null;
-    const m = html.match(/var DATA = (\[.*?\]);\s*$/m);
-    if (!m) return null;
-    try { return JSON.parse(m[1]); }
-    catch (e) { console.log('DATA parse error:', e.message.split('\n')[0]); return null; }
-}
-
-function main() {
-    console.log('fetching', URL, '(via curl)');
-    const html = fetchHtml();
-    const rows = extractData(html);
-    if (!rows) {
+async function main() {
+    console.log('fetching', URL);
+    let data;
+    try {
+        data = await fetchJson(URL);
+    } catch (e) {
         // Source unreachable / blocked: keep the last known-good snapshot so
         // we never break the pipeline or ship stale data overwritten by null.
         console.log('Could not reach the tournament source (' + URL + ') - keeping existing data/meta.js');
         console.log('EXIT: skipped (no fresh data)');
         return;
     }
-    console.log('rows fetched:', rows.length);
 
+    const rows = data && data.cards;
+    if (!rows || !rows.length) {
+        console.log('Empty tournament payload - keeping existing data/meta.js');
+        console.log('EXIT: skipped (no fresh data)');
+        return;
+    }
+    console.log('rows fetched:', rows.length, '| decks:', data.totalDecks, '| events:', data.eventCount);
+
+    const names = loadNames();
     const cards = {};
     let joined = 0;
     for (const row of rows) {
-        const mm = row.img && row.img.match(/\/(ven|unl|sfd|ogn|ogs|jdg|pr)\/([a-z0-9]+(?:-star)?-\d+-\d+)_/i);
-        if (!mm) continue;
-        const slug = mm[2].toLowerCase();
+        const slug = row.cardId;
+        if (!slug || !/^(ven|unl|sfd|ogn|ogs|jdg|pr|sgn)-/.test(slug)) continue;
         cards[slug] = {
-            name: row.name || null,
-            decks: row.decks != null ? Math.round(row.decks) : null,
-            copies: row.copies != null ? Math.round(row.copies * 10) / 10 : null,
-            play: row.play != null ? Math.round(row.play * 10) / 10 : null,
+            name: names[slug] || null,
+            decks: row.deckCount != null ? Math.round(row.deckCount) : null,
+            copies: row.avgCopies != null ? Math.round(row.avgCopies * 10) / 10 : null,
+            play: row.playRatePct != null ? Math.round(row.playRatePct * 10) / 10 : null,
             games: row.games != null ? Math.round(row.games) : null,
-            win: row.win != null ? Math.round(row.win * 10) / 10 : null,
+            win: row.winRatePct != null ? Math.round(row.winRatePct * 10) / 10 : null,
         };
         joined++;
     }
     console.log('cards with a RiftZay slug:', joined);
 
     const out =
-        '// Generated by tools/collect_meta.js from riftdecks.com tournament data.\n' +
+        '// Generated by tools/collect_meta.js from BoundRift tournament data (boundrift.com).\n' +
         '// Competitive metagame snapshot (decks / play% / win%) per card. Do not edit by hand.\n' +
         'window.RIFTZAY_TOURNAMENT_META = ' +
         JSON.stringify({ updated: todayStr(), cards: cards }) + ';\n';
@@ -114,4 +114,4 @@ function main() {
     console.log('wrote', META_FILE, Buffer.byteLength(out, 'utf8'), 'bytes,', joined, 'cards');
 }
 
-main();
+main().catch(function (e) { console.error(e); process.exit(1); });
