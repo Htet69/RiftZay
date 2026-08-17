@@ -32,7 +32,9 @@
     let currentUser = null;
     let myWatchlist = [];
     let allListings = [];
+    let soldListings = [];
     let currentSlug = null; // card currently shown on product page
+    let listingsSort = "price"; // "price" | "newest" for community offers on the product page
 
     // Filter / pagination state
     let filterSet = "";
@@ -114,11 +116,15 @@
     }
 
     function listingsForCard(slug) {
-        return allListings
-            .filter(function (listing) {
-                return listing.card_slug === slug && Number(listing.quantity) > 0;
-            })
-            .sort(function (a, b) { return Number(a.price_mmk) - Number(b.price_mmk); });
+        const active = allListings.filter(function (listing) {
+            return listing.card_slug === slug && Number(listing.quantity) > 0;
+        });
+        if (listingsSort === "newest") {
+            return active.sort(function (a, b) {
+                return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+            });
+        }
+        return active.sort(function (a, b) { return Number(a.price_mmk) - Number(b.price_mmk); });
     }
 
     function lowestListing(card) {
@@ -152,6 +158,15 @@
             const nav = a.getAttribute("data-nav");
             a.classList.toggle("active", nav === name || (name === "product" && nav === "home"));
         });
+
+        const titles = {
+            home: "Browse Cards — RiftZay",
+            buys: "Buy Now — RiftZay",
+            watchlist: "My Watchlist — RiftZay",
+            listings: "My Listings — RiftZay",
+            product: "Card — RiftZay",
+        };
+        document.title = titles[name] || "RiftZay — Riftbound TCG Price Tracker";
 
         if (name === "product" && slug) {
             openProduct(slug);
@@ -634,9 +649,10 @@
             : 0;
 
         $("#crumb-card").textContent = card.name;
+        document.title = card.name + " — RiftZay";
 
         const marketRows = offers.map(function (listing, index) {
-            const isBest = index === 0;
+            const isBest = listingsSort === "price" && index === 0;
             const isMine = currentUser && listing.seller_id === currentUser.id;
             return (
                 '<div class="market-row ' + (isBest ? "best-row" : "") + '">' +
@@ -820,7 +836,13 @@
             '<button class="btn btn-outline" data-sell="' + card.slug + '">Sell this card</button>' +
             "</div>" +
             '<div class="market-list">' +
-            '<div class="market-list-header">Community Listings <span class="guide-badge">Live offers</span></div>' +
+            '<div class="market-list-header">' +
+            '<span>Community Listings <span class="guide-badge">Live offers</span></span>' +
+            '<div class="listings-sort" role="group" aria-label="Sort community listings">' +
+            '<button class="listings-sort-btn' + (listingsSort === "price" ? " active" : "") + '" data-sort-listings="price">Cheapest</button>' +
+            '<button class="listings-sort-btn' + (listingsSort === "newest" ? " active" : "") + '" data-sort-listings="newest">Newest</button>' +
+            "</div>" +
+            "</div>" +
             marketRows +
             "</div>" +
             '<p class="price-disclaimer">RiftZay connects buyers and sellers. Confirm card condition, identity, payment, and delivery details before completing a trade.</p>' +
@@ -1216,6 +1238,14 @@
         updateDataSources();
     }
 
+    async function refreshMyListings() {
+        if (!currentUser) {
+            soldListings = [];
+            return;
+        }
+        soldListings = await API.getMyListings(currentUser.id);
+    }
+
     async function handleListingSubmit(e) {
         e.preventDefault();
         const error = $("#listing-error");
@@ -1259,30 +1289,59 @@
             return;
         }
 
-        const mine = allListings.filter(function (listing) {
-            return listing.seller_id === currentUser.id;
-        });
+        const mine = allListings
+            .concat(soldListings)
+            .filter(function (listing) {
+                return listing.seller_id === currentUser.id;
+            })
+            .sort(function (a, b) {
+                return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+            });
         container.innerHTML = mine.map(function (listing) {
             const card = CARD_BY_SLUG[listing.card_slug];
             if (!card) return "";
+            const sold = Number(listing.quantity) <= 0;
+            const stock = sold
+                ? '<span class="sold-tag">Sold</span>'
+                : '<strong>' + Number(listing.quantity) + "</strong>";
+            const actions = sold
+                ? '<div class="seller-listing-actions"><button class="btn btn-sm btn-outline" data-repost-listing="' + listing.id + '">Repost</button>' +
+                '<button class="btn btn-danger btn-sm" data-delete-listing="' + listing.id + '">Delete</button></div>'
+                : '<div class="seller-listing-actions"><button class="btn btn-sm btn-outline" data-sold-listing="' + listing.id + '">Mark sold</button>' +
+                '<button class="btn btn-danger btn-sm" data-delete-listing="' + listing.id + '">Delete</button></div>';
             return (
-                '<article class="seller-listing">' +
+                '<article class="seller-listing' + (sold ? " sold" : "") + '">' +
                 '<div class="seller-listing-card"><strong data-detail="' + card.slug + '">' + escapeHTML(card.name) + '</strong><span>' + card.setCode + " " + card.number + "</span></div>" +
                 '<div><span class="listing-label">Condition</span><strong>' + escapeHTML(listing.condition) + "</strong></div>" +
                 '<div><span class="listing-label">Version</span><strong>' + escapeHTML(listing.variant) + "</strong></div>" +
-                '<div><span class="listing-label">Quantity</span><strong>' + Number(listing.quantity) + "</strong></div>" +
+                '<div><span class="listing-label">Quantity</span>' + stock + "</div>" +
                 '<div class="seller-listing-price">' + priceDual(listing.price_mmk) + "</div>" +
-                '<button class="btn btn-danger btn-sm" data-delete-listing="' + listing.id + '">Remove</button>' +
+                actions +
                 "</article>"
             );
         }).join("");
         empty.hidden = mine.length !== 0;
     }
 
+    async function handleSetSold(id, sold) {
+        if (!currentUser) return;
+        try {
+            await API.setListingQuantity(currentUser.id, id, sold ? 0 : 1);
+            await refreshMyListings();
+            await refreshListings();
+            renderMyListings();
+            renderCards($("#search-input").value, $("#sort-select").value);
+            showToast(sold ? "Listing marked as sold." : "Listing is back on the market.", "success");
+        } catch (err) {
+            showToast(err.message, "error");
+        }
+    }
+
     async function handleDeleteListing(id) {
-        if (!currentUser || !window.confirm("Remove this listing from the marketplace?")) return;
+        if (!currentUser || !window.confirm("Delete this listing permanently?")) return;
         try {
             await API.deleteListing(currentUser.id, id);
+            await refreshMyListings();
             await refreshListings();
             renderMyListings();
             renderCards($("#search-input").value, $("#sort-select").value);
@@ -1530,6 +1589,11 @@
             } catch (e) {
                 myWatchlist = [];
             }
+            try {
+                soldListings = await withTimeout(API.getMyListings(currentUser.id), 8000, []);
+            } catch (e) {
+                soldListings = [];
+            }
         }
         try {
             await withTimeout(refreshListings(), 8000, null);
@@ -1738,9 +1802,28 @@
                 return;
             }
 
+            const soldEl = e.target.closest("[data-sold-listing]");
+            if (soldEl) {
+                await handleSetSold(soldEl.getAttribute("data-sold-listing"), true);
+                return;
+            }
+
+            const repostEl = e.target.closest("[data-repost-listing]");
+            if (repostEl) {
+                await handleSetSold(repostEl.getAttribute("data-repost-listing"), false);
+                return;
+            }
+
             const deleteListingEl = e.target.closest("[data-delete-listing]");
             if (deleteListingEl) {
                 await handleDeleteListing(deleteListingEl.getAttribute("data-delete-listing"));
+                return;
+            }
+
+            const sortListingsEl = e.target.closest("[data-sort-listings]");
+            if (sortListingsEl) {
+                listingsSort = sortListingsEl.getAttribute("data-sort-listings");
+                if (currentSlug) openProduct(currentSlug);
                 return;
             }
 

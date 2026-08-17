@@ -27,6 +27,23 @@ create index if not exists listings_card_price_idx
     on public.listings (card_slug, price_mmk)
     where quantity > 0;
 
+create index if not exists listings_created_idx
+    on public.listings (created_at desc)
+    where quantity > 0;
+
+-- Keep updated_at in sync automatically
+create or replace function public.touch_updated_at()
+returns trigger language plpgsql as $$
+begin
+    new.updated_at := now();
+    return new;
+end $$;
+
+drop trigger if exists listings_touch_updated_at on public.listings;
+create trigger listings_touch_updated_at
+    before update on public.listings
+    for each row execute function public.touch_updated_at();
+
 alter table public.watchlist enable row level security;
 alter table public.listings enable row level security;
 
@@ -38,10 +55,12 @@ create policy "Users can add to own watchlist" on public.watchlist for insert wi
 create policy "Users can remove from own watchlist" on public.watchlist for delete using (auth.uid() = user_id);
 
 drop policy if exists "Anyone can read active listings" on public.listings;
+drop policy if exists "Sellers can read own listings" on public.listings;
 drop policy if exists "Users can create own listings" on public.listings;
 drop policy if exists "Users can update own listings" on public.listings;
 drop policy if exists "Users can delete own listings" on public.listings;
 create policy "Anyone can read active listings" on public.listings for select using (quantity > 0);
+create policy "Sellers can read own listings" on public.listings for select using (auth.uid() = seller_id);
 create policy "Users can create own listings" on public.listings for insert with check (auth.uid() = seller_id);
 create policy "Users can update own listings" on public.listings for update using (auth.uid() = seller_id) with check (auth.uid() = seller_id);
 create policy "Users can delete own listings" on public.listings for delete using (auth.uid() = seller_id);

@@ -319,6 +319,53 @@ getListings: async function (cardSlug) {
             });
         },
 
+        /* The seller's own listings, including sold ones (quantity = 0) so
+         * the "My Listings" page can show a Sold state and offer repost. */
+        getMyListings: async function (userId) {
+            if (cloudMode()) {
+                try {
+                    const { data, error } = await getClient()
+                        .from("listings")
+                        .select("*")
+                        .eq("seller_id", userId)
+                        .order("created_at", { ascending: false });
+                    if (error) throw new Error(error.message);
+                    return data || [];
+                } catch (e) {
+                    markCloudDown();
+                }
+            }
+            return readLS(LS_KEYS.listings, []).filter(function (listing) {
+                return listing.seller_id === userId;
+            });
+        },
+
+        /* Mark sold (quantity 0) or repost (back to a positive quantity). */
+        setListingQuantity: async function (userId, listingId, quantity) {
+            if (cloudMode()) {
+                try {
+                    const { error } = await getClient()
+                        .from("listings")
+                        .update({ quantity: quantity })
+                        .eq("id", listingId)
+                        .eq("seller_id", userId);
+                    if (error) throw new Error(error.message);
+                    return;
+                } catch (e) {
+                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
+                    throw e;
+                }
+            }
+
+            const listings = readLS(LS_KEYS.listings, []);
+            const target = listings.find(function (listing) {
+                return listing.id === listingId && listing.seller_id === userId;
+            });
+            if (!target) return;
+            target.quantity = quantity;
+            writeLS(LS_KEYS.listings, listings);
+        },
+
         createListing: async function (user, values) {
             const listing = {
                 card_slug: values.card_slug,
