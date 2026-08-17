@@ -1085,6 +1085,7 @@
 
         const entries = [];
         CARDS.forEach(function (card) {
+            if (card.type === "Rune") return;
             const meta = window.RIFTZAY_PREDICT.meta(card.slug);
             if (meta && meta.win != null) entries.push({ card: card, meta: meta });
         });
