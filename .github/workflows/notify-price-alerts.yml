@@ -1,0 +1,32 @@
+name: Notify price-drop alerts
+
+# Emails opted-in users whose watched cards dropped >= 5% overnight. Runs
+# after the daily collector and Discord notifier.
+# Requires secrets: SUPABASE_URL, SUPABASE_SERVICE_KEY, RESEND_API_KEY,
+# ALERT_FROM_EMAIL.
+
+on:
+  schedule:
+    - cron: '40 8 * * *'   # 08:40 UTC daily (collector 08:00, discord 08:20)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Send per-user price-drop emails
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_FROM_EMAIL: ${{ secrets.ALERT_FROM_EMAIL }}
+        run: node tools/notify_price_alerts.js
