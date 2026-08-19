@@ -318,7 +318,7 @@
 
         const typeLabel = card.type ? cap(card.type) : "";
         const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
-        const minminTag = minminApproved(card.slug) ? ' <span class="minmin-stamp" title="မင်မင် approved this one — his word is final (it is not)">မင်မင် ✓</span>' : "";
+        const minminTag = minminApproved(card.slug) ? ' <span class="minmin-stamp" title="မင်မင် approved this one">မင်မင် ✓</span>' : "";
 
         const marketStrip = market
             ? '<span class="strip-label">Market</span><span class="strip-price best">' + marketDual(market.market) + '</span>' +
