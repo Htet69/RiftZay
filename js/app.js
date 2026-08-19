@@ -150,7 +150,7 @@
     /* ---------- Views / navigation ---------- */
 
     function showView(name, slug) {
-        ["home", "product", "watchlist", "listings", "buys"].forEach(function (v) {
+        ["home", "product", "watchlist", "listings", "buys", "meta"].forEach(function (v) {
             $("#view-" + v).hidden = v !== name;
         });
         $("#view-product").hidden = name !== "product";
@@ -162,6 +162,7 @@
         const titles = {
             home: "Browse Cards — RiftZay",
             buys: "Buy Now — RiftZay",
+            meta: "Metagame Tier List — RiftZay",
             watchlist: "My Watchlist — RiftZay",
             listings: "My Listings — RiftZay",
             product: "Card — RiftZay",
@@ -173,6 +174,8 @@
         } else if (name === "buys") {
             requestNotificationPermission();
             renderBuys();
+        } else if (name === "meta") {
+            renderMeta();
         } else if (name === "watchlist") {
             renderWatchlist();
         } else if (name === "listings") {
@@ -1180,6 +1183,98 @@
         empty.hidden = shown.length !== 0;
     }
 
+    /* ---------- Metagame tier list ----------
+     * Cards ranked by tournament win rate + deck presence (riftdecks.com).
+     * Tier score = win% * 0.5 + min(play%, 20) * 0.5 — rewards both strength
+     * and how much of the format actually plays the card. */
+    function metaScore(meta) {
+        return (meta.win || 0) * 0.5 + Math.min(meta.play || 0, 20) * 0.5;
+    }
+
+    function metaTier(meta) {
+        const s = metaScore(meta);
+        return s >= 34 ? "S" : s >= 32 ? "A" : s >= 29.5 ? "B" : "C";
+    }
+
+    function metaEntryHTML(slug, meta) {
+        const card = CARD_BY_SLUG[slug];
+        const name = card ? card.name : meta.name || slug;
+        const set = card ? card.set : "";
+        const tier = metaTier(meta);
+        const watched = currentUser && myWatchlist.indexOf(slug) !== -1;
+        const price = marketPrice(slug);
+        return (
+            '<div class="buys-row meta-row">' +
+            '<div class="meta-tier-badge tier-' + tier.toLowerCase() + '">' + tier + "</div>" +
+            '<div class="buys-thumb">' +
+            '<img loading="lazy" decoding="async" src="' + (card ? card.art : "") + '" alt="' + escapeHTML(name) + '" onerror="riftzayImgRetry(this)">' +
+            '<div class="tcg-thumb-fallback"></div>' +
+            "</div>" +
+            '<div class="buys-info">' +
+            '<div class="buys-title"><a data-detail="' + slug + '">' + escapeHTML(name) + "</a></div>" +
+            (set ? '<div class="buys-set">' + escapeHTML(set) + "</div>" : "") +
+            '<div class="meta-stats">' +
+            '<span class="meta-stat meta-stat-win">' + meta.win + "% win</span>" +
+            '<span class="meta-stat">' + meta.play + "% of decks</span>" +
+            '<span class="meta-stat">' + meta.decks + " decks</span>" +
+            (meta.games != null ? '<span class="meta-stat">' + meta.games + " games</span>" : "") +
+            "</div>" +
+            "</div>" +
+            '<div class="buys-actions">' +
+            (price ? '<div class="buys-price">' + marketDual(price.market) + "</div>" : "") +
+            '<button class="watch-btn' + (watched ? " watched" : "") + '" data-watch="' + slug + '" title="' +
+            (watched ? "Remove from watchlist" : "Add to watchlist") + '">' +
+            (watched ? "★" : "☆") + " Watchlist</button>" +
+            '<button class="btn btn-outline btn-sm" data-detail="' + slug + '">View →</button>' +
+            "</div>" +
+            "</div>"
+        );
+    }
+
+    function renderMeta() {
+        const list = $("#meta-tier-list");
+        const empty = $("#meta-empty");
+        if (!list) return;
+
+        const updatedEl = $("#meta-updated");
+        const metaData = window.RIFTZAY_TOURNAMENT_META || {};
+        if (updatedEl) {
+            updatedEl.textContent = metaData.updated
+                ? "Updated " + metaData.updated + " — win rate vs deck presence."
+                : "Updated from live tournament snapshots.";
+        }
+
+        if (!window.RIFTZAY_PREDICT || !metaData.cards) {
+            list.innerHTML = "";
+            empty.hidden = false;
+            return;
+        }
+
+        const tierFilter = $("#meta-tier").value;
+        const typeFilter = $("#meta-type").value;
+
+        const entries = [];
+        Object.keys(metaData.cards).forEach(function (slug) {
+            const meta = window.RIFTZAY_PREDICT.meta(slug);
+            if (!meta || meta.win == null) return;
+            if (tierFilter !== "all" && metaTier(meta) !== tierFilter) return;
+            const card = CARD_BY_SLUG[slug];
+            const ctype = card ? card.type : "";
+            if (typeFilter === "Champion" && ctype !== "Legend") return;
+            if (typeFilter === "Rune" && ctype !== "Rune") return;
+            if (typeFilter === "Card" && (ctype === "Legend" || ctype === "Rune")) return;
+            entries.push({ slug: slug, meta: meta });
+        });
+
+        entries.sort(function (a, b) {
+            return metaScore(b.meta) - metaScore(a.meta) ||
+                (b.meta.play || 0) - (a.meta.play || 0);
+        });
+
+        list.innerHTML = entries.map(function (e) { return metaEntryHTML(e.slug, e.meta); }).join("");
+        empty.hidden = entries.length !== 0;
+    }
+
     /* Watch a signed-in user's list for Buy Now cards and surface alerts
      * (toast + browser notification). Runs after prices + watchlist load. */
     let buysAlertShown = {};
@@ -1719,6 +1814,8 @@
         // Buy Now filters
         $("#buys-tier").addEventListener("change", renderBuys);
         $("#buys-limit").addEventListener("change", renderBuys);
+        $("#meta-tier").addEventListener("change", renderMeta);
+        $("#meta-type").addEventListener("change", renderMeta);
 
         // Filters
         $("#filter-set").addEventListener("change", function () {

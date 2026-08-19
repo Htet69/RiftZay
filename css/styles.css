@@ -2358,6 +2358,86 @@ em {
     color: var(--text-muted);
 }
 
+/* ================= METAGAME TIER LIST ================= */
+.meta-row {
+    grid-template-columns: 44px 84px 1fr auto;
+}
+
+.meta-tier-badge {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1;
+}
+
+.meta-tier-badge.tier-s {
+    color: var(--green);
+}
+
+.meta-tier-badge.tier-a {
+    color: var(--orange);
+}
+
+.meta-tier-badge.tier-b {
+    color: var(--violet);
+}
+
+.meta-tier-badge.tier-c {
+    color: var(--text-muted);
+}
+
+.meta-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 6px;
+}
+
+.meta-stat {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.meta-stat-win {
+    color: var(--green);
+}
+
+.meta-legend {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 0.5px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.meta-legend-letter {
+    display: inline-block;
+    width: 18px;
+    font-family: var(--display);
+    font-weight: 700;
+    color: var(--text);
+}
+
+@media (max-width: 620px) {
+    .meta-row {
+        grid-template-columns: 34px 56px 1fr auto;
+    }
+
+    .meta-tier-badge {
+        font-size: 20px;
+    }
+
+    .meta-legend {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ================= PRICE FORECAST ================= */
 .card-forecast {
     margin: 6px 0 0;
