@@ -2856,6 +2856,77 @@ em {
     font-size: 12px;
 }
 
+.assistant-sub.ai-on {
+    color: var(--orange);
+    font-weight: 600;
+}
+
+.assistant-keybtn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 6px;
+}
+
+.assistant-keybtn:hover {
+    color: var(--text);
+}
+
+.assistant-keyrow {
+    display: flex;
+    gap: 6px;
+    padding: 8px 14px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+}
+
+.assistant-keyrow input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-alt);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12.5px;
+    outline: none;
+}
+
+.assistant-keyrow input:focus {
+    border-color: var(--orange);
+}
+
+.assistant-keysave {
+    background: var(--orange);
+    border: none;
+    border-radius: 6px;
+    color: #0A1410;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 12px;
+    cursor: pointer;
+}
+
+.assistant-keyclear {
+    background: none;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.assistant-keyclear:hover {
+    color: #e05555;
+    border-color: #e05555;
+}
+
 .assistant-close {
     margin-left: auto;
     background: none;
