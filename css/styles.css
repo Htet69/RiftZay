@@ -2391,23 +2391,6 @@ em {
     color: var(--blue);
 }
 
-.meta-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    margin-top: 6px;
-}
-
-.meta-stat {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.meta-stat-win {
-    color: var(--green);
-}
-
 .meta-legend {
     margin-top: 28px;
     padding-top: 18px;

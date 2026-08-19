@@ -45,11 +45,11 @@ RiftZay/
 â”œâ”€â”€ data/
 â”‚   â”œâ”€â”€ cards.js         (bundled snapshot of the real catalog â€” fallback/offline)
 â”‚   â”œâ”€â”€ prices.js        (bundled snapshot of real TCGplayer market prices â€” fallback/offline)
-â”‚   â””â”€â”€ price_history.js (daily market-price snapshots for the forecast engine)
-â”‚   â””â”€â”€ meta.js        (daily tournament metagame snapshot from riftdecks.com)
+â”‚   â”œâ”€â”€ price_history.js (daily market-price snapshots for the forecast engine)
+â”‚   â”œâ”€â”€ meta_legends.js (weekly legend tier list from riftbound.gg)
 â”œâ”€â”€ tools/
 â”‚   â”œâ”€â”€ collect_history.js (nightly collector that appends today's prices)
-â”‚   â”œâ”€â”€ collect_meta.js    (nightly collector that fetches tournament metagame)
+â”‚   â”œâ”€â”€ collect_legends.js (nightly collector that fetches the legend tier list)
 â”‚   â”œâ”€â”€ generate-prices.js (rebuilds the fallback price bundle so offline visitors get fresh prices daily)
 â”‚   â”œâ”€â”€ notify_moves.js    (posts Discord price-move alerts)
 â”‚   â””â”€â”€ watched.json       (card slugs you want a heads-up on at a lower threshold)
@@ -60,7 +60,7 @@ RiftZay/
     â”œâ”€â”€ config.js
     â”œâ”€â”€ cards.js         (loader: fetches the freshest daily catalog snapshot)
     â”œâ”€â”€ prices.js        (loader: fetches live market pricing from the Open TCG API)
-    â”œâ”€â”€ predict.js       (forecast engine: trend + momentum on collected history + tournament meta)
+    â”œâ”€â”€ predict.js       (forecast engine: trend + momentum on collected history + legend tiers)
     â”œâ”€â”€ buys.js          (Smart Buy-Now scoring engine incl. forecast signal)
     â”œâ”€â”€ api.js
     â””â”€â”€ app.js
@@ -81,7 +81,7 @@ Every card that TCGplayer sells now shows its **real market price** (near-mint a
 - Market prices appear on card tiles, search suggestions, and a "Market Price Guide" on each card page, in USD with an approximate MMK equivalent (using `MMK_PER_USD` in `js/config.js`).
 - A **"Buy Now"** view ranks every card with a transparent **Smart Score (0-100)** using signals like cross-market price gaps, condition discounts, foil value, liquidity, and how much real money can be saved. Cards are tiered **Buy Now / Watch / Wait** with a plain-English reason for each, and a score chip shows up on card tiles and the price guide. Watch a card and RiftZay toasts + browser-notifies you when it becomes a Buy Now pick.
 - **Price prediction:** RiftZay collects a **daily market-price snapshot** of every card (via the `collect-history` GitHub Action) and forecasts each card's likely **30-day direction** using trend + momentum on that real history â€” shown as `â–² +12% Â· conf 78%` chips on the Buy Now view, card tiles, and price guides, and weighted into the Smart Score itself. Forecasts are honest statistics (not a black box): they only turn on once a card has a week of collected history, and every chip shows its confidence. The more days RiftZay has, the sharper the predictions get.
-- **Tournament-driven insight:** alongside price history, RiftZay also collects a **daily snapshot of the Riftbound tournament metagame** from [riftDecks.com](https://riftdecks.com/cards/stats) â€” how often each card is played, its win rate, and how many decks use it. Because cards that perform well in competitive play (high win rate, rising play rate) tend to climb in price *before* the TCGplayer market fully reacts, this metagame signal is blended into the forecast as a leading indicator. You'll see a `ðŸ† 62% win` chip on hot cards, a tournament line in the Price Trend "why buy" copy, and the forecast confidence rises for cards with solid competitive samples. Tournament data shows up even for cards that haven't built price history yet.
+- **Tournament-driven insight:** alongside price history, RiftZay also tracks the **competitive Riftbound legend tier list** from [riftbound.gg](https://riftbound.gg/tier-list/) â€” champions ranked by tournament results (wins and top cuts from Regional Qualifiers), refreshed weekly. Because champions that perform well in competitive play tend to climb in price *before* the TCGplayer market fully reacts, this tier signal is blended into the forecast as a leading indicator. You'll see a `S tier` chip on hot legends, a tournament line in the Price Trend "why buy" copy, the forecast confidence rises for high-tier champions, and a **Trending in Tournaments** strip on the homepage plus a full **Metagame tier list** view (S/A/B/C/D) linking each champion to its product page. Tournament data shows up even for champions that haven't built price history yet.
 - **Price Trend & "why buy":** every card page draws a **trend chart** of its collected price history with a dashed 30-day projection, plus a plain-language reason for acting â€” *"The price is trending up â€” projected +12% in 30 days. Buying now locks in today's price."* Buy Now rows show a compact sparkline too.
 - The price guide also breaks each card down **by condition** (Near Mint / Lightly Played / Moderately Played / Heavily Played / Damaged) for both finishes, pulled from TCGplayer's per-SKU listings â€” so buyers can compare what a well-worn copy actually costs.
 - A **"Store Prices Worldwide"** section shows the lowest in-stock offer across six markets (US, UK, Australia, New Zealand, Singapore, Canada), aggregated from local stores and eBay by [RiftCompare](https://riftcompare.com) â€” each in its native currency with an approximate MMK equivalent (rates in `FX_TO_USD` in `js/config.js`).
