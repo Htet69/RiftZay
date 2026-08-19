@@ -22,7 +22,6 @@
         session: "riftzay_session",
         watchlist: "riftzay_watchlist",
         listings: "riftzay_listings",
-        alerts: "riftzay_alerts",
     };
 
     function readLS(key, fallback) {
@@ -75,33 +74,6 @@
         return readLS(LS_KEYS.session, null);
     }
 
-    function currentSessionEmail(userId) {
-        const s = localSession();
-        if (s && s.email) return s.email;
-        const users = readLS(LS_KEYS.users, []);
-        const u = users.find(function (x) { return x.id === userId; });
-        return (u && u.email) || "";
-    }
-
-    /* Best-effort: remember this user's email + alert preference in Supabase
-     * so the nightly email notifier can find them. Never blocks auth. */
-    async function syncProfile(user) {
-        if (!user || !cloudMode()) return;
-        const prefs = readLS(LS_KEYS.alerts, {});
-        const enabled = prefs[user.id] !== false;
-        try {
-            await getClient()
-                .from("profiles")
-                .upsert({
-                    user_id: user.id,
-                    email: user.email,
-                    email_alerts: enabled,
-                }, { onConflict: "user_id" });
-        } catch (e) {
-            if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
-        }
-    }
-
     /* One fast connectivity check before touching the Supabase client, so an
      * unreachable host or missing table never spins up the realtime websocket
      * and its retry spam. Probes the actual listings table so a missing table
@@ -151,13 +123,11 @@
                     const { data, error } = await getClient().auth.getSession();
                     if (error) throw error;
                     if (!data.session) return null;
-                    const user = {
+                    return {
                         id: data.session.user.id,
                         email: data.session.user.email,
                         username: data.session.user.user_metadata?.username || data.session.user.email,
                     };
-                    syncProfile(user);
-                    return user;
                 } catch (e) {
                     markCloudDown();
                 }
@@ -175,17 +145,15 @@
                             data: { username: username || email.split("@")[0] },
                         },
                     });
-if (error) throw new Error(error.message);
+                    if (error) throw new Error(error.message);
                     if (!data.session) {
                         throw new Error("Account created! Check your email to confirm before signing in.");
                     }
-                    const user = {
+                    return {
                         id: data.session.user.id,
                         email: data.session.user.email,
-                        username: data.session.user.user_metadata?.username || data.session.user.email,
+                        username: data.session.user.user_metadata?.username || email.split("@")[0],
                     };
-                    syncProfile(user);
-                    return user;
                 } catch (e) {
                     if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
                     throw e;
@@ -217,14 +185,12 @@ if (error) throw new Error(error.message);
                         email: email,
                         password: password,
                     });
-if (error) throw new Error(error.message || "Invalid credentials.");
-                    const user = {
+                    if (error) throw new Error(error.message || "Invalid credentials.");
+                    return {
                         id: data.session.user.id,
                         email: data.session.user.email,
-                        username: data.session.user.user_metadata?.username || data.session.user.email,
+                        username: data.session.user.user_metadata?.username || email.split("@")[0],
                     };
-                    syncProfile(user);
-                    return user;
                 } catch (e) {
                     if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
                     throw e;
@@ -308,46 +274,6 @@ logout: async function () {
             map[userId] = list;
             writeLS(LS_KEYS.watchlist, map);
             return added;
-        },
-
-        /* ---------- PRICE-DROP EMAIL ALERTS ---------- */
-
-        getEmailAlerts: async function (userId) {
-            const prefs = readLS(LS_KEYS.alerts, {});
-            if (userId && prefs[userId] === false) return false;
-            if (cloudMode() && userId) {
-                try {
-                    const { data, error } = await getClient()
-                        .from("profiles")
-                        .select("email_alerts")
-                        .eq("user_id", userId)
-                        .maybeSingle();
-                    if (error) throw new Error(error.message);
-                    if (data && data.email_alerts != null) return data.email_alerts;
-                } catch (e) {
-                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
-                }
-            }
-            return true;
-        },
-
-        setEmailAlerts: async function (userId, enabled) {
-            const prefs = readLS(LS_KEYS.alerts, {});
-            prefs[userId] = Boolean(enabled);
-            writeLS(LS_KEYS.alerts, prefs);
-            if (cloudMode() && userId) {
-                try {
-                    await getClient()
-                        .from("profiles")
-                        .upsert({
-                            user_id: userId,
-                            email: currentSessionEmail(userId),
-                            email_alerts: Boolean(enabled),
-                        }, { onConflict: "user_id" });
-                } catch (e) {
-                    if (/network|failed to fetch|quic|http/i.test(e.message || "")) markCloudDown();
-                }
-            }
         },
 
         /* ---------- COMMUNITY LISTINGS ---------- */

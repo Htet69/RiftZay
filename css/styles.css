@@ -1039,39 +1039,6 @@ em {
     line-height: 1.55;
 }
 
-.alerts-toggle {
-    margin: 18px 0 26px;
-    padding: 14px 16px;
-    background: var(--bg-alt);
-    border: 0.5px solid var(--border);
-    border-radius: 8px;
-    max-width: 640px;
-}
-
-.alerts-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    font-size: 14px;
-    color: var(--text);
-    cursor: pointer;
-}
-
-.alerts-label input {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--orange);
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.alerts-hint {
-    color: var(--text-muted);
-    font-size: 12px;
-    margin-top: 8px;
-}
-
 .results-meta {
     display: flex;
     align-items: center;

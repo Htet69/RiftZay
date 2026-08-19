@@ -52,12 +52,10 @@ RiftZay/
 â”‚   â”œâ”€â”€ collect_meta.js    (nightly collector that fetches tournament metagame)
 â”‚   â”œâ”€â”€ generate-prices.js (rebuilds the fallback price bundle so offline visitors get fresh prices daily)
 â”‚   â”œâ”€â”€ notify_moves.js    (posts Discord price-move alerts)
-â”‚   â”œâ”€â”€ notify_price_alerts.js (emails members whose watched cards dropped >= 5%)
 â”‚   â””â”€â”€ watched.json       (card slugs you want a heads-up on at a lower threshold)
 â”œâ”€â”€ .github/workflows/
 â”‚   â”œâ”€â”€ collect-history.yml (GitHub Action that runs both collectors daily)
-â”‚   â”œâ”€â”€ notify-moves.yml    (GitHub Action that posts price-move alerts to Discord)
-â”‚   â””â”€â”€ notify-price-alerts.yml (GitHub Action that emails members about watched-card price drops)
+â”‚   â””â”€â”€ notify-moves.yml    (GitHub Action that posts price-move alerts to Discord)
 â””â”€â”€ js/
     â”œâ”€â”€ config.js
     â”œâ”€â”€ cards.js         (loader: fetches the freshest daily catalog snapshot)
@@ -99,24 +97,6 @@ The `notify-moves` GitHub Action runs 20 minutes after each daily snapshot and p
 3. In `tools/watched.json`, add the slug of any card you want a *lower* 2% threshold on, e.g. `"sfd-227-star-221"` (you can find a slug in any card's URL). Everything else alerts at the default 5%.
 
 That's it â€” alerts start on the next daily run (or hit **Actions â†’ Notify price moves â†’ Run workflow** to test now). Each alert lists the biggest movers with name, new price, and the % change.
-
-## Price-drop alerts by email (for your members)
-
-Members who sign in can toggle **"Email me when a watched card's price drops 5% or more"** on their Watchlist page. A nightly job emails each opted-in user about the cards on their watchlist that dropped at least 5% between daily snapshots. The emails are sent through [Resend](https://resend.com) (free tier: 100 emails/day). One-time setup:
-
-1. Create a free account at https://resend.com, add a domain (or use `onboarding@resend.dev` while testing), and copy your **API key**.
-2. Verify the `profiles` table exists: in Supabase â†’ SQL Editor, re-run `supabase.sql` (it now creates the `profiles` table + policies alongside `watchlist`/`listings`).
-3. On GitHub: **repo â†’ Settings â†’ Secrets and variables â†’ Actions**, add these secrets:
-   - `SUPABASE_URL` â€” your Project URL (same as in `js/config.js`)
-   - `SUPABASE_SERVICE_KEY` â€” Project Settings â†’ API â†’ `service_role` key
-   - `RESEND_API_KEY` â€” from Resend
-   - `ALERT_FROM_EMAIL` â€” e.g. `RiftZay <alerts@yourdomain.com>`
-4. The `notify-price-alerts` Action runs daily at 08:40 UTC (after the collectors). Test it now via **Actions â†’ Notify price-drop alerts â†’ Run workflow**, or dry-run locally:
-   ```bash
-   node tools/notify_price_alerts.js --dry
-   ```
-
-The opt-in is on by default for new sign-ups; members can turn it off with one toggle on their Watchlist page. Alerts only ever contain cards the user is watching.
 
 ## Price-data note
 

@@ -864,21 +864,13 @@
     function renderWatchlist() {
         const grid = $("#watchlist-grid");
         const empty = $("#watchlist-empty");
-        const toggle = $("#alerts-toggle");
 
         if (!currentUser) {
             grid.innerHTML = "";
             empty.hidden = false;
             empty.textContent = "Sign in to track cards with your watchlist.";
-            if (toggle) toggle.hidden = true;
             return;
         }
-
-        toggle.hidden = false;
-        API.getEmailAlerts(currentUser.id).then(function (enabled) {
-            const cb = $("#alerts-checkbox");
-            if (cb && cb.checked !== enabled) cb.checked = enabled;
-        });
 
         const watched = CARDS.filter(function (c) {
             return myWatchlist.indexOf(c.slug) !== -1;
@@ -1788,22 +1780,6 @@
             $("#listing-usd-hint").textContent = v > 0
                 ? "≈ " + fmtUSD(v) + " USD"
                 : "";
-        });
-
-        // Price-drop email alerts preference
-        $("#alerts-checkbox").addEventListener("change", async function () {
-            if (!currentUser) return;
-            this.disabled = true;
-            try {
-                await API.setEmailAlerts(currentUser.id, this.checked);
-                showToast(this.checked
-                    ? "Email alerts on — we'll notify you on 5%+ drops."
-                    : "Email alerts off.", "success");
-            } catch (e) {
-                showToast(e.message, "error");
-            } finally {
-                this.disabled = false;
-            }
         });
 
         // Delegated: card detail (product page), watch, suggestions

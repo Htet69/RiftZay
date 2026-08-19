@@ -8,20 +8,6 @@ create table if not exists public.watchlist (
     primary key (user_id, card_slug)
 );
 
--- Per-user preferences for price-drop email alerts. The app upserts a row
--- at signup/login so the nightly notifier knows who opted in and where to send.
-create table if not exists public.profiles (
-    user_id uuid primary key references auth.users(id) on delete cascade,
-    email text not null,
-    email_alerts boolean not null default true,
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
-);
-
-create index if not exists profiles_email_alerts_idx
-    on public.profiles (email)
-    where email_alerts = true;
-
 create table if not exists public.listings (
     id uuid primary key default gen_random_uuid(),
     card_slug text not null,
@@ -60,7 +46,6 @@ create trigger listings_touch_updated_at
 
 alter table public.watchlist enable row level security;
 alter table public.listings enable row level security;
-alter table public.profiles enable row level security;
 
 drop policy if exists "Users can read own watchlist" on public.watchlist;
 drop policy if exists "Users can add to own watchlist" on public.watchlist;
@@ -68,12 +53,6 @@ drop policy if exists "Users can remove from own watchlist" on public.watchlist;
 create policy "Users can read own watchlist" on public.watchlist for select using (auth.uid() = user_id);
 create policy "Users can add to own watchlist" on public.watchlist for insert with check (auth.uid() = user_id);
 create policy "Users can remove from own watchlist" on public.watchlist for delete using (auth.uid() = user_id);
-
-drop policy if exists "Users can read own profile" on public.profiles;
-drop policy if exists "Users can upsert own profile" on public.profiles;
-create policy "Users can read own profile" on public.profiles for select using (auth.uid() = user_id);
-create policy "Users can upsert own profile" on public.profiles for insert with check (auth.uid() = user_id);
-create policy "Users can upsert own profile" on public.profiles for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "Anyone can read active listings" on public.listings;
 drop policy if exists "Sellers can read own listings" on public.listings;
