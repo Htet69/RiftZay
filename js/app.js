@@ -1859,18 +1859,6 @@
         const body = $("#assistant-body");
         const field = $("#assistant-field");
         const form = $("#assistant-form");
-        const modeBadge = $("#assistant-mode");
-        const keyBtn = $("#assistant-keybtn");
-        const keyRow = $("#assistant-keyrow");
-        const keyInput = $("#assistant-keyinput");
-        const keySave = $("#assistant-keysave");
-        const keyClear = $("#assistant-keyclear");
-
-        function assistantStatus() {
-            const ai = window.RIFTZAY_ASSISTANT && window.RIFTZAY_ASSISTANT.aiEnabled();
-            modeBadge.textContent = ai ? "AI: ON" : "AI: OFF";
-            modeBadge.classList.toggle("ai-on", !!ai);
-        }
 
         function assistantMsg(html, cls) {
             const wrap = document.createElement("div");
@@ -1893,41 +1881,11 @@
         function assistantOpen() {
             panel.hidden = false;
             launcher.hidden = true;
-            assistantStatus();
             if (!body.childElementCount) {
-                const ai = window.RIFTZAY_ASSISTANT && window.RIFTZAY_ASSISTANT.aiEnabled();
-                if (ai) {
-                    assistantMsg("Hi! I'm your AI assistant — ask me anything about Riftbound and I'll tell you what to do.");
-                } else {
-                    assistantMsg("Hi! Ask me about any Riftbound card or question. For full free-form AI answers, tap the gear and paste a free Gemini API key (no cost).");
-                }
+                assistantMsg("Hi! I'm your RiftZay assistant. Ask me about any card — e.g. <em>price of Jhin</em>, <em>should I buy Veigar</em>, or <em>what should I buy</em>.");
             }
             field.focus();
         }
-
-        keyBtn.addEventListener("click", function () {
-            keyRow.hidden = !keyRow.hidden;
-            if (!keyRow.hidden) keyInput.focus();
-        });
-
-        keySave.addEventListener("click", function () {
-            const k = keyInput.value.trim();
-            if (!k) return;
-            window.RIFTZAY_ASSISTANT.setApiKey(k);
-            keyInput.value = "";
-            keyRow.hidden = true;
-            keyClear.hidden = false;
-            assistantStatus();
-            assistantMsg("AI mode is ON. Ask me anything about Riftbound — free-form questions welcome.", "bot");
-        });
-
-        keyClear.addEventListener("click", function () {
-            window.RIFTZAY_ASSISTANT.clearApiKey();
-            keyClear.hidden = true;
-            keyRow.hidden = true;
-            assistantStatus();
-            assistantMsg("AI mode is OFF — using the built-in engine instead.", "bot");
-        });
 
         function assistantClose() {
             panel.hidden = true;
@@ -1957,17 +1915,15 @@
                             : (l ? "<div>" + escapeHTML(l) + "</div>" : "");
                     }).join("");
                     const msg = assistantMsg(html, "bot");
-                    if (a.cards && a.cards.length && a.action === "product") {
-                        a.cards.slice(0, 3).forEach(function (slug) {
-                            const btn = document.createElement("button");
-                            btn.className = "assistant-goto";
-                            btn.textContent = "Open " + (window.RIFTZAY_CARD_BY_SLUG[slug] ? window.RIFTZAY_CARD_BY_SLUG[slug].name : "card");
-                            btn.addEventListener("click", function () {
-                                showView("product", slug);
-                                assistantClose();
-                            });
-                            msg.appendChild(btn);
+                    if (a.cards && a.cards.length === 1 && a.action === "product") {
+                        const btn = document.createElement("button");
+                        btn.className = "assistant-goto";
+                        btn.textContent = "Open " + (window.RIFTZAY_CARD_BY_SLUG[a.cards[0]] ? window.RIFTZAY_CARD_BY_SLUG[a.cards[0]].name : "card");
+                        btn.addEventListener("click", function () {
+                            showView("product", a.cards[0]);
+                            assistantClose();
                         });
+                        msg.appendChild(btn);
                     }
                 }
             } catch (err) {

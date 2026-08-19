@@ -1,18 +1,13 @@
-﻿/* RiftZay - Card Assistant
+﻿/* RiftZay - Card Assistant (rule-based, runs 100% in the browser)
  *
- * Two modes:
- *   AI mode   - when the user pastes a Google Gemini API key (stored only in
- *               this browser's localStorage), questions go to the Gemini API
- *               with live Riftbound context, so the user can type anything
- *               and get a recommendation on what to do.
- *   Local mode - no key set: a rule-based engine answers price, buy/sell
- *               verdict, trend, listings, tournaments, best buys using only
- *               the data RiftZay collects (no cost, no external call).
+ * Answers plain-English questions about cards using only the data RiftZay
+ * already collects: real market prices, multi-market store prices, the
+ * price-forecast engine, tournament metagame, Buy-Now scoring, and live
+ * community listings. No external API, no key, no cost.
  *
  * Exposed as window.RIFTZAY_ASSISTANT:
- *   ask(text)   -> Promise<{ reply, cards: [slugs], action: "product"|null }>
+ *   ask(text)   -> { reply: "...", cards: [slugs], action: "product"|null }
  *   matchCard   -> fuzzy card lookup by name/subtitle
- *   setApiKey / getApiKey / clearApiKey / aiEnabled
  */
 
 (function () {
@@ -82,16 +77,14 @@
     }
 
     /* Try to pull a card name out of a question. Handles "price of X",
-     * "X price", "should I buy X", "X trend", "what should I do with X" etc. */
+     * "X price", "should I buy X", "X trend" etc. */
     function extractCard(text) {
         var t = String(text || "").trim();
         var m = t.match(/price\s+of\s+(.+)/i) || t.match(/how much (?:is|does)\s+(.+?)(?:\?|$)/i) ||
             t.match(/should i (?:buy|sell)\s+(.+)/i) || t.match(/(?:buy|sell)\s+(.+)/i) ||
-            t.match(/(?:price|cost|value|trend|forecast|listing|sell|sellings?)\s+(?:for\s+|of\s+|on\s+)?(.+)/i) ||
-            t.match(/(?:with|about|for)\s+(.+?)(?:\?|$)/i);
+            t.match(/(?:price|cost|value|trend|forecast|listing|sell|sellings?)\s+(?:for\s+|of\s+|on\s+)?(.+)/i);
         if (!m) return matchCard(t);
-        var best = matchCard(m[1]);
-        return best || matchCard(t);
+        return matchCard(m[1]);
     }
 
     /* ---------- answers ---------- */
@@ -256,160 +249,6 @@
         };
     }
 
-    /* ---------- AI mode (optional Gemini API) ---------- */
-
-    var KEY_LS = "riftzay_gemini_key";
-    var GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
-
-    function getApiKey() {
-        try { return localStorage.getItem(KEY_LS) || ""; } catch (e) { return ""; }
-    }
-
-    function setApiKey(key) {
-        try {
-            var k = String(key || "").trim();
-            if (k) localStorage.setItem(KEY_LS, k); else localStorage.removeItem(KEY_LS);
-        } catch (e) { /* ignore */ }
-    }
-
-    function clearApiKey() {
-        try { localStorage.removeItem(KEY_LS); } catch (e) { /* ignore */ }
-    }
-
-    function aiEnabled() {
-        return !!getApiKey();
-    }
-
-    /* Build a compact, current Riftbound context block for the model. */
-    function systemPrompt() {
-        var lines = [];
-        lines.push("You are the RiftZay assistant for Riftbound, a physical collectible card game based on " +
-            "League of Legends. Every card maps to a LoL champion or skin (e.g. Emperor of the Sands = Azir's skin). " +
-            "You give players practical recommendations on what to do: buy, wait, sell, trade, or deck advice. " +
-            "Be direct, honest, and specific. If you don't know, say so rather than inventing. " +
-            "Remember: this is a card game, not the videogame — always talk about the CARD and its market value.");
-        lines.push("");
-        lines.push("LIVE DATA FROM THE SITE RIGHT NOW:");
-
-        var meta = (window.RIFTZAY_TOURNAMENT_META || {}).cards || {};
-        var top = Object.keys(meta).map(function (k) { return meta[k]; })
-            .sort(function (a, b) { return (b.play || 0) - (a.play || 0); }).slice(0, 8);
-        if (top.length) {
-            lines.push("- Tournament meta (win% / deck-share%): " + top.map(function (m) {
-                return m.name + " " + (m.win != null ? m.win + "% win" : "?") +
-                    (m.play != null ? ", " + m.play + "% decks" : "");
-            }).join("; "));
-        }
-
-        var prices = PRICES();
-        var slugs = Object.keys(prices).filter(function (s) { return prices[s] && prices[s].market > 0; });
-        if (slugs.length) {
-            var sample = slugs.slice(0, 6).map(function (s) {
-                var c = BY_SLUG()[s];
-                return (c ? c.name : s) + " $" + prices[s].market.toFixed(2);
-            });
-            lines.push("- Sample market prices (USD): " + sample.join(", ") + ". " +
-                "Prices are TCGplayer market; a separate community market trades in MMK.");
-        }
-        lines.push("- Exchange: 1 USD = " + MMK_PER_USD + " MMK (approx).");
-        lines.push("- Example champion cards users own: " + championExamples().join(", ") + ".");
-
-        lines.push("");
-        lines.push("RULES:");
-        lines.push("- When you mention a specific card, ALWAYS use its exact card name as shown in the data above (e.g. \"Emperor of the Sands\", not \"Azir\").");
-        lines.push("- Give a clear verdict when asked to decide (e.g. BUY NOW / WATCH / WAIT / SELL) with 1-3 reasons.");
-        lines.push("- Keep answers under ~120 words. Use line breaks for readability.");
-        lines.push("- The user can also browse community listings (MMK prices) and Buy-Now scores on the site.");
-        return lines.join("\n");
-    }
-
-    /* A short sample of real card names to ground the model. */
-    function championExamples() {
-        var cards = CARDS();
-        var names = [];
-        var pick = 0;
-        for (var i = 0; i < cards.length && names.length < 8; i++) {
-            var n = cards[i].name;
-            if (n && n.length >= 4 && names.indexOf(n) === -1) {
-                names.push(n);
-                pick++;
-            }
-        }
-        return names;
-    }
-
-    /* Pull the reply text out of a Gemini generateContent response. */
-    function geminiText(data) {
-        try {
-            var cand = data.candidates && data.candidates[0];
-            if (!cand || !cand.content || !cand.content.parts) return "";
-            return cand.content.parts.map(function (p) { return p.text || ""; }).join("");
-        } catch (e) { return ""; }
-    }
-
-    function callGemini(prompt) {
-        var url = GEMINI_URL + "?key=" + encodeURIComponent(getApiKey());
-        var body = {
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.6 },
-        };
-        var ctrl = new AbortController();
-        var timer = setTimeout(function () { ctrl.abort(); }, 30000);
-        return fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-            signal: ctrl.signal,
-        }).then(function (r) {
-            if (!r.ok) throw new Error("Gemini HTTP " + r.status);
-            return r.json();
-        }).then(function (data) {
-            return geminiText(data);
-        }).finally(function () {
-            clearTimeout(timer);
-        });
-    }
-
-    /* Find cards the model named, so the UI can offer "Open card" buttons. */
-    function mentionedCards(text) {
-        var out = [], seen = {};
-        var cards = CARDS();
-        for (var i = 0; i < cards.length; i++) {
-            var n = cards[i].name;
-            if (!n || n.length < 4) continue;
-            var rx = new RegExp("(^|[^A-Za-z])" + escapeRegex(n) + "([^A-Za-z]|$)");
-            if (rx.test(text) && !seen[n]) {
-                seen[n] = true;
-                out.push(cards[i]);
-                if (out.length >= 3) break;
-            }
-        }
-        return out;
-    }
-
-    function escapeRegex(s) {
-        return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    }
-
-    function askAI(text) {
-        var prompt = systemPrompt() + "\n\nUser question: " + text;
-        var attempt = function (n) {
-            return callGemini(prompt).then(function (reply) {
-                if (!reply || reply.length < 40) {
-                    if (n < 2) return attempt(n + 1);
-                    return { reply: "The AI gave a short or empty answer — try again.", cards: [], action: null };
-                }
-                var cards = mentionedCards(reply);
-                return {
-                    reply: reply,
-                    cards: cards.map(slugOf),
-                    action: cards.length ? "product" : null,
-                };
-            });
-        };
-        return attempt(0);
-    }
-
     /* ---------- intent routing ---------- */
 
     function helpText() {
@@ -462,7 +301,7 @@
             };
         }
 
-        if (/should i (buy|sell)|worth buying|good buy|buy or wait|buy now or wait|what should i do|advise|recommend.*do/.test(lt)) return advisorAnswer(card);
+        if (/should i (buy|sell)|worth buying|good buy|buy or wait|buy now or wait/.test(lt)) return advisorAnswer(card);
         if (/trend|forecast|going up|going down|rising|falling|drop|project/.test(lt)) return trendAnswer(card);
         if (/listing|selling|offer|who'?s selling|buy from/.test(lt)) return listingsAnswer(card);
         if (/tournament|competitive|win rate|meta|play rate/.test(lt)) return metaAnswer(card);
@@ -472,18 +311,6 @@
     }
 
     function ask(text) {
-        if (aiEnabled()) {
-            return askAI(text).catch(function (err) {
-                var note = "(AI request failed — " + (err && err.message || "network error") +
-                    " — showing built-in answer instead.)";
-                var fallback = route(text);
-                var done = function (res) {
-                    if (res && res.reply) res.reply = res.reply + "\n\n" + note;
-                    return res;
-                };
-                return typeof fallback.then === "function" ? fallback.then(done) : Promise.resolve(done(fallback));
-            });
-        }
         var result = route(text);
         if (result && typeof result.then === "function") return result;
         return Promise.resolve(result);
@@ -492,9 +319,5 @@
     window.RIFTZAY_ASSISTANT = {
         ask: ask,
         matchCard: matchCard,
-        setApiKey: setApiKey,
-        getApiKey: getApiKey,
-        clearApiKey: clearApiKey,
-        aiEnabled: aiEnabled,
     };
 })();
