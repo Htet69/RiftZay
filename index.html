@@ -27,7 +27,7 @@
         href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cpath%20fill='none'%20stroke='%23F09A3E'%20stroke-width='1.6'%20d='M16%202%20L29%2010%20L29%2022%20L16%2030%20L3%2022%20L3%2010%20Z'/%3E%3Cpath%20fill='%23F09A3E'%20d='M16%209%20L21%2013.5%20L21%2018.5%20L16%2023%20L11%2018.5%20L11%2013.5%20Z'/%3E%3C/svg%3E" />
 
     <link rel="preconnect" href="https://cmsassets.rgpub.io" crossorigin />
-    <link rel="stylesheet" href="css/styles.css?v=15" />
+    <link rel="stylesheet" href="css/styles.css?v=16" />
 </head>
 
 <body>
@@ -380,6 +380,25 @@
         </div>
     </footer>
 
+    <!-- ============ CARD ASSISTANT (AI chat widget) ============ -->
+    <div class="assistant-launcher" id="assistant-launcher" title="Ask about cards" aria-label="Open card assistant">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+    </div>
+    <div class="assistant-panel" id="assistant-panel" hidden>
+        <div class="assistant-head">
+            <span class="assistant-title">RiftZay Assistant</span>
+            <span class="assistant-sub">Ask about any card</span>
+            <button class="assistant-close" id="assistant-close" aria-label="Close assistant">&times;</button>
+        </div>
+        <div class="assistant-body" id="assistant-body"></div>
+        <form class="assistant-input" id="assistant-form">
+            <input type="text" id="assistant-field" placeholder="e.g. price of Jhin" autocomplete="off" aria-label="Ask the assistant" />
+            <button type="submit" class="assistant-send" aria-label="Send">Send</button>
+        </form>
+    </div>
+
     <!-- Supabase browser client (cloud mode). Remove only if you stay in local mode. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
@@ -400,7 +419,8 @@
     <!-- Smart Buy-Now scoring engine (transparent, rule-based + forecast) -->
     <script src="js/buys.js"></script>
     <script src="js/api.js?v=3"></script>
-    <script src="js/app.js?v=11"></script>
+    <script src="js/app.js?v=12"></script>
+    <script src="js/assistant.js?v=1"></script>
 </body>
 
 </html>
