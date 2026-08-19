@@ -9,10 +9,8 @@
  *
  * Source: https://riftbound.gg/tier-list/ - champions ranked by tournament
  * results (wins + top cuts across Regional Qualifiers and 64+ player
- * events). riftdecks.com and boundrift.com publish per-card stats but were
- * replaced for this view because they were stale; riftbound.gg also updates
- * the list on a reliable weekly cadence and does not sit behind Cloudflare
- * bot protection that blocks CI collection.
+ * events). riftbound.gg updates the list on a reliable weekly cadence and
+ * does not sit behind Cloudflare bot protection that blocks CI collection.
  *
  * Runs nightly with the other collectors. Can be run locally:
  *   node tools/collect_legends.js

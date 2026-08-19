@@ -904,19 +904,17 @@
             arrow + " " + pct + ' · ' + fc.confidence + '%</span>';
     }
 
-    /* Tournament metagame chip: win rate + play rate from riftdecks.com
-     * tournament results. Shown when a card has competitive data. */
+    /* Tournament tier chip: champion tier from the riftbound.gg weekly
+     * tier list. Shown when a legend has a competitive tier. */
     function tournamentChip(slug) {
         if (!window.RIFTZAY_PREDICT) return "";
         const meta = window.RIFTZAY_PREDICT.meta(slug);
-        if (!meta || meta.win == null) return "";
-        const cls = meta.win >= 55 ? "meta-hot" : meta.win >= 48 ? "meta-ok" : "meta-cold";
-        const title = meta.name + " in tournaments: " + meta.win + "% win rate, " +
-            (meta.play != null ? meta.play + "% of decks, " : "") +
-            (meta.games != null ? meta.games + " games, " : "") +
-            (meta.decks != null ? meta.decks + " decks" : "");
-        return '<span class="pred-chip meta-chip ' + cls + (cls === "meta-ok" ? " pred-flat" : "") + '" title="' + escapeHTML(title) + '">' +
-            meta.win + "% win</span>";
+        if (!meta || !meta.tier) return "";
+        const cls = meta.tier === "S" ? "meta-hot" : meta.tier === "A" || meta.tier === "B" ? "meta-ok" : "meta-cold";
+        const title = meta.name + " in tournaments: Tier " + meta.tier +
+            " (riftbound.gg weekly tier list)";
+        return '<span class="pred-chip meta-chip ' + cls + '" title="' + escapeHTML(title) + '">' +
+            meta.tier + " tier</span>";
     }
 
     /* Mini trend chart + "why buy/wait" explanation. Renders an SVG line of
@@ -948,8 +946,8 @@
                 why = "The price has been <strong>stable</strong> over the collected window. With no clear move either way, the decision comes down to today's value signals.";
             }
             if (fc.meta && fc.meta.signal >= 0.3) {
-                why += ' <span class="trend-meta">Hot in tournaments — ' + fc.meta.win + "% win rate" +
-                    (fc.meta.play != null ? ", " + fc.meta.play + "% of decks" : "") + " — tournament demand tends to push prices up.</span>";
+                why += ' <span class="trend-meta">Hot in tournaments — Tier ' + fc.meta.tier +
+                    " champion (" + fc.meta.name + ") — tournament demand tends to push prices up.</span>";
             }
             why += ' <span class="trend-conf">(confidence ' + fc.confidence + "%)</span>";
         }
@@ -1085,37 +1083,38 @@
             '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(card.name) + '" onerror="riftzayImgRetry(this)">' +
             '<div class="tcg-thumb-fallback"></div>' +
             "</div>" +
-            '<div class="trend-pick-name">' + escapeHTML(card.name) + "</div>" +
+            '<div class="trend-pick-name">' + escapeHTML(meta.name || card.name) + "</div>" +
             '<div class="trend-pick-set">' + card.set + "</div>" +
             '<div class="trend-pick-stats">' +
-            '<span class="trend-pick-win">' + meta.win + "% win</span>" +
-            (meta.play != null ? '<span class="trend-pick-play">' + meta.play + "% of decks</span>" : "") +
+            '<span class="trend-pick-win">Tier ' + meta.tier + "</span>" +
+            (meta.epithet ? '<span class="trend-pick-play">' + escapeHTML(meta.epithet) + "</span>" : "") +
             "</div>" +
             "</a>"
         );
     }
 
-    /* Homepage strip: cards with the most tournament play + best win rates,
-     * from the riftdecks.com metagame snapshot (data/meta.js). Populated
+    /* Homepage strip: champions ranked by competitive tier, from the
+     * riftbound.gg weekly tier list (data/meta_legends.js). Populated
      * immediately (no price-history warmup needed, unlike price forecasts). */
     function renderTrending() {
         const section = $("#trending-section");
         const row = $("#trending-row");
         if (!section || !row) return;
 
-        if (!window.RIFTZAY_PREDICT) {
-            section.hidden = true;
-            return;
-        }
-
+        const legends = (window.RIFTZAY_TOURNAMENT_LEGENDS && window.RIFTZAY_TOURNAMENT_LEGENDS.legends) || {};
+        const tierOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 };
         const entries = [];
-        CARDS.forEach(function (card) {
-            if (card.type === "Rune") return;
-            const meta = window.RIFTZAY_PREDICT.meta(card.slug);
-            if (meta && meta.win != null) entries.push({ card: card, meta: meta });
+        Object.keys(legends).forEach(function (slug) {
+            const legend = legends[slug];
+            if (!legend || !legend.tier) return;
+            const card = CARD_BY_SLUG[slug];
+            if (!card) return;
+            entries.push({ card: card, meta: legend });
         });
         entries.sort(function (a, b) {
-            return (b.meta.play || 0) - (a.meta.play || 0) || (b.meta.win || 0) - (a.meta.win || 0);
+            return (tierOrder[a.meta.tier] != null ? tierOrder[a.meta.tier] : 9) -
+                (tierOrder[b.meta.tier] != null ? tierOrder[b.meta.tier] : 9) ||
+                (a.meta.name || "").localeCompare(b.meta.name || "");
         });
         const top = entries.slice(0, 10);
 

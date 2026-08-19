@@ -2580,6 +2580,10 @@ em {
     color: var(--orange) !important;
 }
 
+.meta-ok {
+    color: var(--gold) !important;
+}
+
 .meta-cold {
     color: var(--text-muted) !important;
 }
