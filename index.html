@@ -27,7 +27,7 @@
         href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cpath%20fill='none'%20stroke='%23F09A3E'%20stroke-width='1.6'%20d='M16%202%20L29%2010%20L29%2022%20L16%2030%20L3%2022%20L3%2010%20Z'/%3E%3Cpath%20fill='%23F09A3E'%20d='M16%209%20L21%2013.5%20L21%2018.5%20L16%2023%20L11%2018.5%20L11%2013.5%20Z'/%3E%3C/svg%3E" />
 
     <link rel="preconnect" href="https://cmsassets.rgpub.io" crossorigin />
-    <link rel="stylesheet" href="css/styles.css?v=18" />
+    <link rel="stylesheet" href="css/styles.css?v=19" />
 </head>
 
 <body>
@@ -328,15 +328,15 @@
         </div>
     </section>
 
-    <!-- ============ METAGAME VIEW (tournament tier list) ============ -->
+    <!-- ============ METAGAME VIEW (legend tier list) ============ -->
     <section class="view" id="view-meta" hidden>
         <div class="container browse-body">
             <div class="results-head">
                 <div>
                     <div class="kicker">Metagame</div>
                     <h2 class="section-title">Metagame <span class="buys-badge">Tier List</span></h2>
-                    <p class="section-sub">Cards ranked by competitive tournament performance — win rate and deck
-                        presence from riftdecks.com, snapped fresh daily.</p>
+                    <p class="section-sub">Champions ranked by competitive tournament results — wins and top cuts from
+                        Regional Qualifiers, updated weekly from riftbound.gg.</p>
                 </div>
             </div>
             <div class="buys-bar">
@@ -348,15 +348,7 @@
                         <option value="A">A</option>
                         <option value="B">B</option>
                         <option value="C">C</option>
-                    </select>
-                </label>
-                <label class="buys-filter">
-                    <span>Type</span>
-                    <select id="meta-type" aria-label="Filter by card type">
-                        <option value="all">All types</option>
-                        <option value="Champion">Champions</option>
-                        <option value="Card">Cards</option>
-                        <option value="Rune">Runes</option>
+                        <option value="D">D</option>
                     </select>
                 </label>
                 <span class="buys-hint" id="meta-updated">Updated from live tournament snapshots.</span>
@@ -364,10 +356,11 @@
             <div id="meta-tier-list"></div>
             <p class="empty-state" id="meta-empty" hidden>No metagame data yet — the tournament snapshot is still loading.</p>
             <div class="meta-legend">
-                <div><span class="meta-legend-letter">S</span> Tier S — format-defining: top win rate + strong presence</div>
-                <div><span class="meta-legend-letter">A</span> Tier A — solid competitive staples</div>
-                <div><span class="meta-legend-letter">B</span> Tier B — playable, situational</div>
-                <div><span class="meta-legend-letter">C</span> Tier C — niche or early-metagame</div>
+                <div><span class="meta-legend-letter">S</span> Tier S — top cut performer and potential winner</div>
+                <div><span class="meta-legend-letter">A</span> Tier A — consistent top cut contender</div>
+                <div><span class="meta-legend-letter">B</span> Tier B — competitive with an experienced pilot</div>
+                <div><span class="meta-legend-letter">C</span> Tier C — sparks here and there</div>
+                <div><span class="meta-legend-letter">D</span> Tier D — best-of cards carry the value</div>
             </div>
         </div>
     </section>
@@ -440,12 +433,14 @@
     <script src="data/price_history.js"></script>
     <!-- Tournament metagame snapshot (riftdecks.com competitive data) -->
     <script src="data/meta.js"></script>
+    <!-- Legend tier list snapshot (riftbound.gg weekly tournament rankings) -->
+    <script src="data/meta_legends.js?v=1"></script>
     <!-- Price forecast engine (trend + momentum on collected history) -->
     <script src="js/predict.js"></script>
     <!-- Smart Buy-Now scoring engine (transparent, rule-based + forecast) -->
     <script src="js/buys.js"></script>
     <script src="js/api.js?v=3"></script>
-    <script src="js/app.js?v=14"></script>
+    <script src="js/app.js?v=15"></script>
 </body>
 
 </html>

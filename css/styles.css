@@ -2387,6 +2387,10 @@ em {
     color: var(--text-muted);
 }
 
+.meta-tier-badge.tier-d {
+    color: var(--blue);
+}
+
 .meta-stats {
     display: flex;
     flex-wrap: wrap;

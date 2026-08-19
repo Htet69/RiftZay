@@ -1184,41 +1184,29 @@
     }
 
     /* ---------- Metagame tier list ----------
-     * Cards ranked by tournament win rate + deck presence (riftdecks.com).
-     * Tier score = win% * 0.5 + min(play%, 20) * 0.5 — rewards both strength
-     * and how much of the format actually plays the card. */
-    function metaScore(meta) {
-        return (meta.win || 0) * 0.5 + Math.min(meta.play || 0, 20) * 0.5;
-    }
+     * Champion (legend) tiers by competitive tournament results, from the
+     * riftbound.gg weekly tier list (data/meta_legends.js): Tier 1-5 mapped
+     * to S/A/B/C/D. Each legend links to its product page for pricing. */
+    const TIER_ORDER = ["S", "A", "B", "C", "D"];
 
-    function metaTier(meta) {
-        const s = metaScore(meta);
-        return s >= 34 ? "S" : s >= 32 ? "A" : s >= 29.5 ? "B" : "C";
-    }
-
-    function metaEntryHTML(slug, meta) {
+    function legendEntryHTML(slug, legend) {
         const card = CARD_BY_SLUG[slug];
-        const name = card ? card.name : meta.name || slug;
+        const name = legend.name || (card ? card.name : slug);
+        const epithet = legend.epithet || (card ? card.fullName || card.name : "");
         const set = card ? card.set : "";
-        const tier = metaTier(meta);
         const watched = currentUser && myWatchlist.indexOf(slug) !== -1;
         const price = marketPrice(slug);
         return (
             '<div class="buys-row meta-row">' +
-            '<div class="meta-tier-badge tier-' + tier.toLowerCase() + '">' + tier + "</div>" +
+            '<div class="meta-tier-badge tier-' + legend.tier.toLowerCase() + '">' + legend.tier + "</div>" +
             '<div class="buys-thumb">' +
             '<img loading="lazy" decoding="async" src="' + (card ? card.art : "") + '" alt="' + escapeHTML(name) + '" onerror="riftzayImgRetry(this)">' +
             '<div class="tcg-thumb-fallback"></div>' +
             "</div>" +
             '<div class="buys-info">' +
             '<div class="buys-title"><a data-detail="' + slug + '">' + escapeHTML(name) + "</a></div>" +
-            (set ? '<div class="buys-set">' + escapeHTML(set) + "</div>" : "") +
-            '<div class="meta-stats">' +
-            '<span class="meta-stat meta-stat-win">' + meta.win + "% win</span>" +
-            '<span class="meta-stat">' + meta.play + "% of decks</span>" +
-            '<span class="meta-stat">' + meta.decks + " decks</span>" +
-            (meta.games != null ? '<span class="meta-stat">' + meta.games + " games</span>" : "") +
-            "</div>" +
+            (epithet ? '<div class="buys-set">' + escapeHTML(epithet) + "</div>" : "") +
+            (set ? '<div class="buys-set">' + escapeHTML(set) + " — Legend</div>" : "") +
             "</div>" +
             '<div class="buys-actions">' +
             (price ? '<div class="buys-price">' + marketDual(price.market) + "</div>" : "") +
@@ -1237,41 +1225,37 @@
         if (!list) return;
 
         const updatedEl = $("#meta-updated");
-        const metaData = window.RIFTZAY_TOURNAMENT_META || {};
+        const metaData = window.RIFTZAY_TOURNAMENT_LEGENDS || {};
         if (updatedEl) {
             updatedEl.textContent = metaData.updated
-                ? "Updated " + metaData.updated + " — win rate vs deck presence."
+                ? "Updated " + metaData.updated + " — " + (metaData.source ? "riftbound.gg" : "tournament data") + " weekly tier list."
                 : "Updated from live tournament snapshots.";
         }
 
-        if (!window.RIFTZAY_PREDICT || !metaData.cards) {
+        const legends = metaData.legends || {};
+        if (!Object.keys(legends).length) {
             list.innerHTML = "";
             empty.hidden = false;
             return;
         }
 
         const tierFilter = $("#meta-tier").value;
-        const typeFilter = $("#meta-type").value;
-
         const entries = [];
-        Object.keys(metaData.cards).forEach(function (slug) {
-            const meta = window.RIFTZAY_PREDICT.meta(slug);
-            if (!meta || meta.win == null) return;
-            if (tierFilter !== "all" && metaTier(meta) !== tierFilter) return;
-            const card = CARD_BY_SLUG[slug];
-            const ctype = card ? card.type : "";
-            if (typeFilter === "Champion" && ctype !== "Legend") return;
-            if (typeFilter === "Rune" && ctype !== "Rune") return;
-            if (typeFilter === "Card" && (ctype === "Legend" || ctype === "Rune")) return;
-            entries.push({ slug: slug, meta: meta });
+        Object.keys(legends).forEach(function (slug) {
+            const legend = legends[slug];
+            if (!legend || !legend.tier) return;
+            if (tierFilter !== "all" && legend.tier !== tierFilter) return;
+            entries.push({ slug: slug, legend: legend });
         });
 
         entries.sort(function (a, b) {
-            return metaScore(b.meta) - metaScore(a.meta) ||
-                (b.meta.play || 0) - (a.meta.play || 0);
+            const ta = TIER_ORDER.indexOf(a.legend.tier);
+            const tb = TIER_ORDER.indexOf(b.legend.tier);
+            if (ta !== tb) return ta - tb;
+            return (a.legend.name || "").localeCompare(b.legend.name || "");
         });
 
-        list.innerHTML = entries.map(function (e) { return metaEntryHTML(e.slug, e.meta); }).join("");
+        list.innerHTML = entries.map(function (e) { return legendEntryHTML(e.slug, e.legend); }).join("");
         empty.hidden = entries.length !== 0;
     }
 
@@ -1815,7 +1799,6 @@
         $("#buys-tier").addEventListener("change", renderBuys);
         $("#buys-limit").addEventListener("change", renderBuys);
         $("#meta-tier").addEventListener("change", renderMeta);
-        $("#meta-type").addEventListener("change", renderMeta);
 
         // Filters
         $("#filter-set").addEventListener("change", function () {
