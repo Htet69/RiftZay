@@ -71,11 +71,9 @@ create policy "Users can remove from own watchlist" on public.watchlist for dele
 
 drop policy if exists "Users can read own profile" on public.profiles;
 drop policy if exists "Users can upsert own profile" on public.profiles;
-drop policy if exists "Users can insert own profile" on public.profiles;
-drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can read own profile" on public.profiles for select using (auth.uid() = user_id);
-create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = user_id);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users can upsert own profile" on public.profiles for insert with check (auth.uid() = user_id);
+create policy "Users can upsert own profile" on public.profiles for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "Anyone can read active listings" on public.listings;
 drop policy if exists "Sellers can read own listings" on public.listings;
