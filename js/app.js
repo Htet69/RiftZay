@@ -301,6 +301,14 @@
 
     /* ---------- Card grid (search results) ---------- */
 
+    /* Deterministic "မင်မင် approved" stamp: ~1 in 6 cards gets the badge
+     * so the same card always shows it (stable per slug). */
+    function minminApproved(slug) {
+        let h = 0;
+        for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+        return h % 6 === 0;
+    }
+
     function cardHTML(card) {
         const watched = currentUser && myWatchlist.indexOf(card.slug) !== -1;
         const offers = listingsForCard(card.slug);
@@ -310,6 +318,7 @@
 
         const typeLabel = card.type ? cap(card.type) : "";
         const champTag = card.champion ? ' <span class="champ-tag">Champion</span>' : "";
+        const minminTag = minminApproved(card.slug) ? ' <span class="minmin-stamp" title="မင်မင် approved this one — his word is final (it is not)">မင်မင် ✓</span>' : "";
 
         const marketStrip = market
             ? '<span class="strip-label">Market</span><span class="strip-price best">' + marketDual(market.market) + '</span>' +
@@ -349,7 +358,7 @@
             buyChip +
             "</div>" +
             "</div>" +
-            (typeLabel ? '<div class="card-type">' + typeLabel + champTag + "</div>" : "") +
+            (typeLabel ? '<div class="card-type">' + typeLabel + champTag + minminTag + "</div>" : "") +
             '<div class="market-strip">' + marketStrip + "</div>" +
             (market ? '<div class="card-forecast">' + forecastChip(card.slug, true) + "</div>" : "") +
             communityStrip +
@@ -1126,6 +1135,62 @@
         section.hidden = false;
     }
 
+    /* ---------- မင်မင်'s Pick (founder's corner) ----------
+     * A rotating champion "pick" with a roast-y tagline. Pure fun — မင်မင်
+     * definitely did not hand-check these ratings, but we will never tell. */
+    const MINMIN_ROASTS = [
+        { tiers: ["S"], text: "No bias whatsoever. မင်မင် definitely did NOT lose a game to this. Probably." },
+        { tiers: ["A"], text: "Solid all-rounder. မင်မင် swears this one is underrated, and honestly? Fine, maybe." },
+        { tiers: ["B"], text: "B is for 'Big brain play, small brain pilot'. မင်မင် mains this and blames the shuffler." },
+        { tiers: ["C"], text: "C for 'Come on, it's not that bad'. မင်မင် says this every single week." },
+        { tiers: ["D"], text: "Found this in the bargain bin. မင်မင် calls it a 'hidden gem'. It is not hidden." },
+    ];
+
+    function minminRoast(tier) {
+        let pool = MINMIN_ROASTS.filter(function (r) { return r.tiers.indexOf(tier) !== -1; });
+        if (!pool.length) pool = MINMIN_ROASTS;
+        return pool[Math.floor(Math.random() * pool.length)].text;
+    }
+
+    function renderMinMinPick() {
+        const section = $("#minmin-pick-section");
+        const box = $("#minmin-pick");
+        if (!section || !box) return;
+
+        const legends = (window.RIFTZAY_TOURNAMENT_LEGENDS && window.RIFTZAY_TOURNAMENT_LEGENDS.legends) || {};
+        const slugs = Object.keys(legends);
+        if (!slugs.length) {
+            section.hidden = true;
+            return;
+        }
+        const slug = slugs[Math.floor(Math.random() * slugs.length)];
+        const legend = legends[slug];
+        const card = CARD_BY_SLUG[slug];
+        if (!card) {
+            section.hidden = true;
+            return;
+        }
+        const price = marketPrice(slug);
+        const tier = legend.tier || "?";
+        box.innerHTML =
+            '<div class="minmin-body" data-detail="' + slug + '">' +
+            '<div class="minmin-thumb">' +
+            '<img loading="lazy" decoding="async" src="' + card.art + '" alt="' + escapeHTML(legend.name || card.name) + '" onerror="riftzayImgRetry(this)">' +
+            '<div class="tcg-thumb-fallback"></div>' +
+            "</div>" +
+            '<div class="minmin-info">' +
+            '<div class="minmin-tier">Tier ' + tier + "</div>" +
+            '<a class="minmin-name" data-detail="' + slug + '">' + escapeHTML(legend.name || card.name) + "</a>" +
+            (legend.epithet ? '<div class="minmin-epithet">' + escapeHTML(legend.epithet) + "</div>" : "") +
+            '<div class="minmin-set">' + (card.set || "") + "</div>" +
+            (price ? '<div class="minmin-price">' + marketDual(price.market) + "</div>" : "") +
+            '<div class="minmin-roast">“' + escapeHTML(minminRoast(tier)) + '”</div>' +
+            '<a class="btn btn-outline btn-sm minmin-view" data-detail="' + slug + '">See offers →</a>' +
+            "</div>" +
+            "</div>";
+        section.hidden = false;
+    }
+
     /* Homepage banner: the single best Buy Now pick right now (falls back to
      * the top-ranked card of any tier if nothing clears the Buy Now bar). */
     function renderTopPick() {
@@ -1732,6 +1797,7 @@
         renderCards("", "name");
         renderTopPick();
         renderTrending();
+        renderMinMinPick();
         initScrollReveal();
 
         // Then load session/watchlist/listings in the background so a slow
@@ -1798,6 +1864,10 @@
         $("#buys-tier").addEventListener("change", renderBuys);
         $("#buys-limit").addEventListener("change", renderBuys);
         $("#meta-tier").addEventListener("change", renderMeta);
+
+        // Founder's corner: roll another pick
+        const reroll = document.querySelector("#minmin-reroll");
+        if (reroll) reroll.addEventListener("click", function () { renderMinMinPick(); });
 
         // Filters
         $("#filter-set").addEventListener("change", function () {
